@@ -2,6 +2,8 @@ package com.siteshkumar.zomato_clone_backend.entity;
 
 import java.time.LocalDateTime;
 import org.hibernate.annotations.CreationTimestamp;
+
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Index;
 import jakarta.persistence.GeneratedValue;
@@ -35,5 +37,6 @@ public class AuditLogsEntity {
     private String performedBy;
 
     @CreationTimestamp
+    @Column(nullable = false, updatable = false)
     private LocalDateTime timestamp;
 }

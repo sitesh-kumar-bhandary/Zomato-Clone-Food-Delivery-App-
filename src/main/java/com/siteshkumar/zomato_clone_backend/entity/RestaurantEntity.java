@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,7 +15,12 @@ import lombok.Setter;
 @Setter
 @Entity
 @NoArgsConstructor
-@Table(name="restaurants")
+@Table(
+    name="restaurants",
+    indexes = {
+        @Index(name="restaurant_city_ind", columnList="city")
+    }
+)
 public class RestaurantEntity {
 
     @Id
@@ -27,5 +33,6 @@ public class RestaurantEntity {
     @Column(nullable = false)
     private String city;
     
-    private boolean active;
+    @Column(nullable = false)
+    private boolean active = true;
 }
