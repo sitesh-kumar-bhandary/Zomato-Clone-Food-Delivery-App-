@@ -1,7 +1,5 @@
 package com.siteshkumar.zomato_clone_backend.entity;
 
-import java.math.BigDecimal;
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -11,6 +9,7 @@ import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Min;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -20,27 +19,26 @@ import lombok.Setter;
 @Entity
 @NoArgsConstructor
 @Table(
-    name="menu_items",
+    name = "cart_items",
     indexes = {
-        @Index(name="menu_restaurant_ind", columnList = "restaurant_id")
+        @Index(name = "cart_item_cart_ind", columnList = "cart_id"),
+        @Index(name = "cart_item_cart_menu_ind", columnList = "cart_id, menu_item_id", unique = true)
     }
 )
-public class MenuItemEntity {
-
+public class CartItemEntity {
+    
     @Id
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private String name;
-
-    @Column(nullable = false, precision = 10, scale = 2)
-    private BigDecimal price;
-
-    @Column(nullable = false)
-    private boolean available = true;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="cart_id", nullable = false)
+    private CartEntity cart;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name="restaurant_id", nullable = false)
-    private RestaurantEntity restaurant;
+    @JoinColumn(name="menu_item_id", nullable =  false)
+    private MenuItemEntity menuItems;
+
+    @Min(1)
+    private int quantity;
 }
