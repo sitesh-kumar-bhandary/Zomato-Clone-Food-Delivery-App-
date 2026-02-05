@@ -1,6 +1,7 @@
 package com.siteshkumar.zomato_clone_backend.entity;
 
 import com.siteshkumar.zomato_clone_backend.enums.AccountStatus;
+import com.siteshkumar.zomato_clone_backend.enums.Role;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -47,4 +48,8 @@ public class UserEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private AccountStatus status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role;
 }
