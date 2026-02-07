@@ -4,6 +4,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import javax.crypto.SecretKey;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import com.siteshkumar.zomato_clone_backend.security.CustomUserDetails;
 import io.jsonwebtoken.Claims;
@@ -41,5 +42,21 @@ public class AuthUtils {
             .expiration(new Date(System.currentTimeMillis() + expirationTime))
             .signWith(getSecretKey())
             .compact();
+    }
+
+    public String getUsernameFromToken(String token){
+        Claims claims = getAllClaims(token);
+        return claims.getSubject();
+    }
+
+    public boolean isTokenValid(String token, UserDetails userDetails){
+        String username = getUsernameFromToken(token);
+
+        return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
+    }
+
+    public boolean isTokenExpired(String token){
+        Claims claims = getAllClaims(token);
+        return claims.getExpiration().before(new Date());
     }
 }
