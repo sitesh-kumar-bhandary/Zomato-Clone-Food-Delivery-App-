@@ -12,8 +12,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -37,11 +35,9 @@ public class UserEntity {
     @Column(nullable = false)
     private String name;
 
-    @Email
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Size(min = 8)
     @Column(nullable = false, length = 255)
     private String password;
 

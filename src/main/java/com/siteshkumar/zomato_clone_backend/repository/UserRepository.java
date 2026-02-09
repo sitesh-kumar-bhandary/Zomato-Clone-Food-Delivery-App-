@@ -9,5 +9,6 @@ import com.siteshkumar.zomato_clone_backend.entity.UserEntity;
 public interface UserRepository extends JpaRepository<UserEntity, Long>{
 
     Optional<UserEntity> findByEmail(String email);
+    boolean existsByEmail(String email);
 
 }
