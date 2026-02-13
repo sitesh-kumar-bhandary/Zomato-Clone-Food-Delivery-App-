@@ -2,6 +2,7 @@ package com.siteshkumar.zomato_clone_backend.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -29,6 +30,13 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // public api's
                 .requestMatchers("/auth/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/restaurants").permitAll()
+                .requestMatchers(HttpMethod.GET, "/restaurants/**").permitAll()
+
+                // Admin Api's
+                .requestMatchers(HttpMethod.POST, "/restaurants").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/restaurants/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/restaurants/**").hasRole("ADMIN")
 
                 .anyRequest().authenticated()
             )
