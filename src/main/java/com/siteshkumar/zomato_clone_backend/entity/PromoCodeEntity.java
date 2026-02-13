@@ -25,7 +25,7 @@ import lombok.Setter;
         @Index(name = "promo_code_ind", columnList = "code", unique = true)
     }
 )
-public class PromoCodeEntity {
+public class PromoCodeEntity extends AuditableEntity{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

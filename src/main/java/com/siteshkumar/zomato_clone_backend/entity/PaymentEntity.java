@@ -31,7 +31,7 @@ import lombok.Setter;
         @Index(name="payment_status_ind", columnList = "status")
     }
 )
-public class PaymentEntity {
+public class PaymentEntity extends AuditableEntity{
 
     @Id
     @GeneratedValue(strategy=GenerationType.IDENTITY)

@@ -32,7 +32,7 @@ import lombok.Setter;
         @Index(name="order_created_at_ind", columnList = "created_at")
     }
 )
-public class OrderEntity {
+public class OrderEntity extends AuditableEntity{
 
     @Id
     @GeneratedValue(strategy=GenerationType.IDENTITY)

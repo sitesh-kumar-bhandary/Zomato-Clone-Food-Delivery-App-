@@ -23,7 +23,7 @@ import lombok.Setter;
         @Index(name="restaurant_city_ind", columnList="city")
     }
 )
-public class RestaurantEntity {
+public class RestaurantEntity extends AuditableEntity{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

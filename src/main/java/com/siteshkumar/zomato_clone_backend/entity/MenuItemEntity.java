@@ -25,7 +25,7 @@ import lombok.Setter;
         @Index(name="menu_restaurant_ind", columnList = "restaurant_id")
     }
 )
-public class MenuItemEntity {
+public class MenuItemEntity extends AuditableEntity{
 
     @Id
     @GeneratedValue(strategy=GenerationType.IDENTITY)

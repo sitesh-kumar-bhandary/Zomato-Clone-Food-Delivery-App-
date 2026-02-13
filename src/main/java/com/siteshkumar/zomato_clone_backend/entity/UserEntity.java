@@ -2,7 +2,6 @@ package com.siteshkumar.zomato_clone_backend.entity;
 
 import com.siteshkumar.zomato_clone_backend.enums.AccountStatus;
 import com.siteshkumar.zomato_clone_backend.enums.Role;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -26,7 +25,7 @@ import lombok.Setter;
         @Index(name="user_email_ind", columnList = "email", unique = true)
     }
 )
-public class UserEntity {
+public class UserEntity extends AuditableEntity{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
