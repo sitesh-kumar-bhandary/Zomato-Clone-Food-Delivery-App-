@@ -13,11 +13,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import com.siteshkumar.zomato_clone_backend.dto.CreateRestaurantRequestDto;
-import com.siteshkumar.zomato_clone_backend.dto.CreateRestaurantResponseDto;
-import com.siteshkumar.zomato_clone_backend.dto.RestaurantResponseDto;
-import com.siteshkumar.zomato_clone_backend.dto.UpdateRestaurantRequestDto;
-import com.siteshkumar.zomato_clone_backend.dto.UpdateRestaurantResponseDto;
+
+import com.siteshkumar.zomato_clone_backend.dto.restaurant.CreateRestaurantRequestDto;
+import com.siteshkumar.zomato_clone_backend.dto.restaurant.CreateRestaurantResponseDto;
+import com.siteshkumar.zomato_clone_backend.dto.restaurant.RestaurantResponseDto;
+import com.siteshkumar.zomato_clone_backend.dto.restaurant.UpdateRestaurantRequestDto;
+import com.siteshkumar.zomato_clone_backend.dto.restaurant.UpdateRestaurantResponseDto;
 import com.siteshkumar.zomato_clone_backend.service.RestaurantService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

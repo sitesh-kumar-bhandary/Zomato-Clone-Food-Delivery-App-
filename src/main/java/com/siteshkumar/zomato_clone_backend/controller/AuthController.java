@@ -6,12 +6,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import com.siteshkumar.zomato_clone_backend.dto.LoginRequestDto;
-import com.siteshkumar.zomato_clone_backend.dto.LoginResponseDto;
-import com.siteshkumar.zomato_clone_backend.dto.RestaurantSignupRequestDto;
-import com.siteshkumar.zomato_clone_backend.dto.RestaurantSignupResponseDto;
-import com.siteshkumar.zomato_clone_backend.dto.CustomerSignupRequestDto;
-import com.siteshkumar.zomato_clone_backend.dto.CustomerSignupResponseDto;
+import com.siteshkumar.zomato_clone_backend.dto.auth.LoginRequestDto;
+import com.siteshkumar.zomato_clone_backend.dto.auth.LoginResponseDto;
+import com.siteshkumar.zomato_clone_backend.dto.auth.SignupRequestDto;
+import com.siteshkumar.zomato_clone_backend.dto.auth.SignupResponseDto;
 import com.siteshkumar.zomato_clone_backend.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,14 +22,14 @@ public class AuthController {
     private final AuthService authService;
     
     @PostMapping("/customer-signup")
-    public ResponseEntity<CustomerSignupResponseDto> customerSignup(@Valid @RequestBody CustomerSignupRequestDto request){
-        CustomerSignupResponseDto response = authService.customerSignup(request);
+    public ResponseEntity<SignupResponseDto> customerSignup(@Valid @RequestBody SignupRequestDto request){
+        SignupResponseDto response = authService.customerSignup(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PostMapping("/restaurant-signup")
-    public ResponseEntity<RestaurantSignupResponseDto> restaurantSignup(@Valid @RequestBody RestaurantSignupRequestDto request){
-        RestaurantSignupResponseDto response = authService.restaurantSignup(request);
+    public ResponseEntity<SignupResponseDto> restaurantSignup(@Valid @RequestBody SignupRequestDto request){
+        SignupResponseDto response = authService.restaurantSignup(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 

@@ -1,4 +1,4 @@
-package com.siteshkumar.zomato_clone_backend.dto;
+package com.siteshkumar.zomato_clone_backend.dto.auth;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -10,16 +10,13 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class CustomerSignupRequestDto {
-    
-    @NotBlank(message="Name is required")
-    private String name;
+public class LoginRequestDto {
 
     @Email(message="Invalid email address")
     @NotBlank(message="Email is required")
     private String email;
 
-    @Size(min=8, message = "Password must be at least 8 characters")
+    @Size(min=8, message="Password must of atleast 8 characters")
     @NotBlank(message="Password is required")
     private String password;
 }

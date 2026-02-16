@@ -22,7 +22,8 @@ import lombok.Setter;
 @Table(
     name="users",
     indexes = {
-        @Index(name="user_email_ind", columnList = "email", unique = true)
+        @Index(name="user_email_ind", columnList = "email"),
+        @Index(name="user_phone_ind", columnList = "phone")
     }
 )
 public class UserEntity extends AuditableEntity{
@@ -36,6 +37,9 @@ public class UserEntity extends AuditableEntity{
 
     @Column(nullable = false, unique = true)
     private String email;
+
+    @Column(nullable = false, unique = true)
+    private String phone;
 
     @Column(nullable = false, length = 255)
     private String password;

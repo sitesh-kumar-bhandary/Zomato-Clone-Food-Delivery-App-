@@ -1,6 +1,5 @@
-package com.siteshkumar.zomato_clone_backend.dto;
+package com.siteshkumar.zomato_clone_backend.dto.auth;
 
-import com.siteshkumar.zomato_clone_backend.enums.Role;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -12,6 +11,6 @@ public class LoginResponseDto {
 
     private String email;
     private String token;
-    private Role role;
+    private String role;
     
 }

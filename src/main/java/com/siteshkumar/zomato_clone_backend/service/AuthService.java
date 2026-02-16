@@ -1,14 +1,12 @@
 package com.siteshkumar.zomato_clone_backend.service;
 
-import com.siteshkumar.zomato_clone_backend.dto.LoginRequestDto;
-import com.siteshkumar.zomato_clone_backend.dto.LoginResponseDto;
-import com.siteshkumar.zomato_clone_backend.dto.RestaurantSignupRequestDto;
-import com.siteshkumar.zomato_clone_backend.dto.RestaurantSignupResponseDto;
-import com.siteshkumar.zomato_clone_backend.dto.CustomerSignupRequestDto;
-import com.siteshkumar.zomato_clone_backend.dto.CustomerSignupResponseDto;
+import com.siteshkumar.zomato_clone_backend.dto.auth.LoginRequestDto;
+import com.siteshkumar.zomato_clone_backend.dto.auth.LoginResponseDto;
+import com.siteshkumar.zomato_clone_backend.dto.auth.SignupRequestDto;
+import com.siteshkumar.zomato_clone_backend.dto.auth.SignupResponseDto;
 
 public interface AuthService {
-    CustomerSignupResponseDto customerSignup(CustomerSignupRequestDto request);
-    RestaurantSignupResponseDto restaurantSignup(RestaurantSignupRequestDto request);
+    SignupResponseDto customerSignup(SignupRequestDto request);
+    SignupResponseDto restaurantSignup(SignupRequestDto request);
     LoginResponseDto login(LoginRequestDto request);
 }
