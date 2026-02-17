@@ -20,6 +20,13 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(apiError, HttpStatus.CONFLICT);
     }
 
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ApiError> handleResourceNotFoundException(ResourceNotFoundException ex){
+        ApiError apiError = new ApiError(ex.getMessage(), HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(apiError, HttpStatus.NOT_FOUND);
+    }
+
+
     @ExceptionHandler(AccountNotApprovedException.class)
     public ResponseEntity<ApiError> handleAccountNotApprovedException(AccountNotApprovedException ex){
         ApiError apiError = new ApiError(ex.getMessage(), HttpStatus.FORBIDDEN);

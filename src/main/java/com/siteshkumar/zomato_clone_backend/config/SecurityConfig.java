@@ -30,12 +30,15 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // public api's
                 .requestMatchers("/auth/**").permitAll()
+                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .requestMatchers(HttpMethod.GET, "/restaurants").permitAll()
-                .requestMatchers(HttpMethod.GET, "/restaurants/**").permitAll()
 
-                // Admin Api's
-                .requestMatchers(HttpMethod.POST, "/restaurants").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/restaurants/**").hasRole("ADMIN")
+                // Restaurant's and Admin combined Api's
+                .requestMatchers(HttpMethod.POST, "/restaurants").hasAnyRole("RESTAURANT", "ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/restaurants/**").hasAnyRole("RESTAURANT", "ADMIN")
+                .requestMatchers(HttpMethod.GET, "/restaurants/**").hasAnyRole("RESTAURANT", "ADMIN")
+
+                // Only Admin api's
                 .requestMatchers(HttpMethod.DELETE, "/restaurants/**").hasRole("ADMIN")
 
                 .anyRequest().authenticated()

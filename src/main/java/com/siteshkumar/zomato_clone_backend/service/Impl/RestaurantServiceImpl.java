@@ -10,9 +10,11 @@ import com.siteshkumar.zomato_clone_backend.dto.restaurant.RestaurantResponseDto
 import com.siteshkumar.zomato_clone_backend.dto.restaurant.UpdateRestaurantRequestDto;
 import com.siteshkumar.zomato_clone_backend.dto.restaurant.UpdateRestaurantResponseDto;
 import com.siteshkumar.zomato_clone_backend.entity.RestaurantEntity;
+import com.siteshkumar.zomato_clone_backend.entity.UserEntity;
 import com.siteshkumar.zomato_clone_backend.enums.AccountStatus;
 import com.siteshkumar.zomato_clone_backend.enums.Role;
 import com.siteshkumar.zomato_clone_backend.exception.AccountNotApprovedException;
+import com.siteshkumar.zomato_clone_backend.exception.ResourceNotFoundException;
 import com.siteshkumar.zomato_clone_backend.repository.RestaurantRepository;
 import com.siteshkumar.zomato_clone_backend.security.CustomUserDetails;
 import com.siteshkumar.zomato_clone_backend.service.RestaurantService;
@@ -55,25 +57,65 @@ public class RestaurantServiceImpl implements RestaurantService{
 
     @Override
     public UpdateRestaurantResponseDto updateRestaurant(Long id, UpdateRestaurantRequestDto request) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'updateRestaurant'");
+        RestaurantEntity restaurant = restaurantRepository.findById(id)
+                                    .orElseThrow(() -> new ResourceNotFoundException("Restaurant with id " + id + " not found"));
+
+        CustomUserDetails user = authUtils.getCurrentLoggedInUser();
+        UserEntity currentUser = user.getUser();
+
+        if(currentUser.getRole() != Role.ADMIN && ! restaurant.getOwner().getId().equals(currentUser.getId()))
+            throw new AccessDeniedException("You cannot update this restaurant");
+
+
+        if(request.getName() != null && ! request.getName().equals(restaurant.getName()))
+            restaurant.setName(request.getName());
+
+        RestaurantEntity updatedRestaurant = restaurantRepository.save(restaurant);
+        return new UpdateRestaurantResponseDto(
+            updatedRestaurant.getId(),
+            updatedRestaurant.getName(),
+            updatedRestaurant.getCity(),
+            updatedRestaurant.isActive()
+        );
     }
 
     @Override
     public void deleteRestaurant(Long id) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'deleteRestaurant'");
+        RestaurantEntity restaurant = restaurantRepository.findById(id)
+                                    .orElseThrow(() -> new ResourceNotFoundException("Restaurant with id " + id + " not found"));
+
+        UserEntity user = authUtils.getCurrentLoggedInUser().getUser();
+        if(user.getRole() != Role.ADMIN)
+            throw new AccessDeniedException("You are not allowed to delete this restaurant");
+
+        restaurantRepository.delete(restaurant);
     }
 
     @Override
     public Page<RestaurantResponseDto> getAllRestaurants(String city, Pageable pageable) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getAllRestaurants'");
+        if(city == null || city.trim().isEmpty())
+            return Page.empty(pageable);
+
+        Page<RestaurantEntity> restaurantPages = restaurantRepository.findByCityIgnoreCaseAndActiveTrue(city, pageable);
+
+        return restaurantPages.map((restaurant -> 
+            new RestaurantResponseDto(
+                restaurant.getId(),
+                restaurant.getName(),
+                restaurant.getCity()
+            )
+        ));
     }
 
     @Override
     public RestaurantResponseDto getRestaurantById(Long id) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getRestaurantById'");
+        RestaurantEntity restaurant = restaurantRepository.findById(id)
+                                    .orElseThrow(() -> new ResourceNotFoundException("Restaurant with id " + id + " not found"));
+
+        return new RestaurantResponseDto(
+            restaurant.getId(),
+            restaurant.getName(),
+            restaurant.getCity()
+        );
     }
 }
