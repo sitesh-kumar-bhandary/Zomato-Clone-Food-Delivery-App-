@@ -33,13 +33,12 @@ public class SecurityConfig {
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .requestMatchers(HttpMethod.GET, "/restaurants").permitAll()
 
+                // Only Restaurant's Api's
+
                 // Restaurant's and Admin combined Api's
                 .requestMatchers(HttpMethod.POST, "/restaurants").hasAnyRole("RESTAURANT", "ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/restaurants/**").hasAnyRole("RESTAURANT", "ADMIN")
-                .requestMatchers(HttpMethod.GET, "/restaurants/**").hasAnyRole("RESTAURANT", "ADMIN")
 
                 // Only Admin api's
-                .requestMatchers(HttpMethod.DELETE, "/restaurants/**").hasRole("ADMIN")
 
                 .anyRequest().authenticated()
             )
