@@ -8,4 +8,5 @@ import com.siteshkumar.zomato_clone_backend.dto.menuItem.UpdateMenuItemResponseD
 public interface MenuItemService {
     CreateMenuItemResponseDto createMenuItem(Long restaurantId, CreateMenuItemRequestDto request);
     UpdateMenuItemResponseDto updateMenuItem(Long restaurantId, Long menuItemId, UpdateMenuItemRequestDto request);
+    void deleteMenuItem(Long restaurantId, Long menuItemId);
 }

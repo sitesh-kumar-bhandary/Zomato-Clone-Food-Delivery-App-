@@ -76,4 +76,20 @@ public class MenuItemServiceImpl implements MenuItemService {
                 savedMenuItem.isAvailable()
             );
     }
+
+    @Override
+    public void deleteMenuItem(Long restaurantId, Long menuItemId) {
+        MenuItemEntity menuItem = menuItemRepository.findByIdAndRestaurantId(menuItemId, restaurantId)
+                                .orElseThrow(() -> new ResourceNotFoundException("Menu item with id " + menuItemId + " not found in the restaurant id "+restaurantId));
+
+        UserEntity currentUser = authUtils.getCurrentLoggedInUser().getUser();
+
+        if(! currentUser.getId().equals(menuItem.getRestaurant().getOwner().getId()))
+            throw new AccessDeniedException("You are not allowed to delete this menu item");
+
+        // Implementing soft delete
+        menuItem.setAvailable(false);
+        menuItemRepository.save(menuItem);
+    }
+    
 }

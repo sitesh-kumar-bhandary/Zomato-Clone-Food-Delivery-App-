@@ -88,7 +88,9 @@ public class RestaurantServiceImpl implements RestaurantService{
         if(user.getRole() != Role.ADMIN)
             throw new AccessDeniedException("You are not allowed to delete this restaurant");
 
-        restaurantRepository.delete(restaurant);
+        // Implementing soft delete
+        restaurant.setActive(false);
+        restaurantRepository.save(restaurant);
     }
 
     @Override

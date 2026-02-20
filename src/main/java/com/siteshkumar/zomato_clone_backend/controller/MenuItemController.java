@@ -3,6 +3,7 @@ package com.siteshkumar.zomato_clone_backend.controller;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -38,11 +39,18 @@ public class MenuItemController {
         return ResponseEntity.ok(response);
     }
 
-    // public ResponseEntity<> deleteMenuItem(){
-
-    // }
+    @DeleteMapping("/{menuItemId}")
+    @PreAuthorize("hasRole('RESTAURANT')")
+    public ResponseEntity<Void> deleteMenuItem(@PathVariable Long restaurantId, @PathVariable Long menuItemId){
+        menuItemService.deleteMenuItem(restaurantId, menuItemId);
+        return ResponseEntity.noContent().build();
+    }
 
     // public ResponseEntity<> getMenuItem(){
 
     // }
+
+    // public ResponseEntity<Page<>> getAllMenuItems(){
+
+    //}
 }
