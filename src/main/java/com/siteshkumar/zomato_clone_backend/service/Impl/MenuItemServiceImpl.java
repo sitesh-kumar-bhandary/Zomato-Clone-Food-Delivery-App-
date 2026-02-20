@@ -1,6 +1,10 @@
 package com.siteshkumar.zomato_clone_backend.service.Impl;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import com.siteshkumar.zomato_clone_backend.dto.menuItem.CreateMenuItemRequestDto;
 import com.siteshkumar.zomato_clone_backend.dto.menuItem.CreateMenuItemResponseDto;
@@ -10,6 +14,7 @@ import com.siteshkumar.zomato_clone_backend.dto.menuItem.UpdateMenuItemResponseD
 import com.siteshkumar.zomato_clone_backend.entity.MenuItemEntity;
 import com.siteshkumar.zomato_clone_backend.entity.RestaurantEntity;
 import com.siteshkumar.zomato_clone_backend.entity.UserEntity;
+import com.siteshkumar.zomato_clone_backend.enums.Role;
 import com.siteshkumar.zomato_clone_backend.exception.ResourceNotFoundException;
 import com.siteshkumar.zomato_clone_backend.repository.MenuItemRepository;
 import com.siteshkumar.zomato_clone_backend.repository.RestaurantRepository;
@@ -108,5 +113,41 @@ public class MenuItemServiceImpl implements MenuItemService {
             menuItem.getRestaurant().getName()
         );
     }
-    
+
+    @Override
+    public Page<MenuItemResponseDto> getAllMenuItems(Long restaurantId, Pageable pageable) {
+        RestaurantEntity restaurant = restaurantRepository.findById(restaurantId)
+                                    .orElseThrow(() -> new ResourceNotFoundException("Restaurant with id " + restaurantId + " not found"));
+
+        if (!restaurant.isActive())
+            throw new ResourceNotFoundException("Restaurant not available");
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isLoggedIn = auth != null && auth.isAuthenticated() && !(auth.getPrincipal() instanceof String);        
+
+        Page<MenuItemEntity> menuItems;
+
+        if(isLoggedIn){
+            UserEntity currentUser = authUtils.getCurrentLoggedInUser().getUser();
+            boolean isOwner = currentUser.getRole() == Role.RESTAURANT && restaurant.getOwner().getId().equals(currentUser.getId());
+
+            if(isOwner)
+                menuItems = menuItemRepository.findByRestaurantId(restaurantId, pageable);
+            
+            else
+                menuItems = menuItemRepository.findByRestaurantIdAndAvailableTrue(restaurantId, pageable);
+        }
+
+        else
+            menuItems = menuItemRepository.findByRestaurantIdAndAvailableTrue(restaurantId, pageable);
+
+        return menuItems.map(menuItem ->
+            new MenuItemResponseDto(
+                    menuItem.getId(),
+                    menuItem.getName(),
+                    menuItem.getPrice(),
+                    restaurant.getName()
+            )
+        );
+    }
 }

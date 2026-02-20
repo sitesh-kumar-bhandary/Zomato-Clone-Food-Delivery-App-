@@ -1,5 +1,7 @@
 package com.siteshkumar.zomato_clone_backend.controller;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -54,7 +56,9 @@ public class MenuItemController {
         return ResponseEntity.ok(response);
     }
 
-    // public ResponseEntity<Page<>> getAllMenuItems(){
-
-    //}
+    @GetMapping
+    public ResponseEntity<Page<MenuItemResponseDto>> getAllMenuItems(@PathVariable Long restaurantId, Pageable pageable){
+        Page<MenuItemResponseDto> page = menuItemService.getAllMenuItems(restaurantId, pageable);
+        return ResponseEntity.ok(page);
+    }
 }

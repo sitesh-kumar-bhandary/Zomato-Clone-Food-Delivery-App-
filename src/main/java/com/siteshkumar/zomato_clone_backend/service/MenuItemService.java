@@ -1,5 +1,7 @@
 package com.siteshkumar.zomato_clone_backend.service;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import com.siteshkumar.zomato_clone_backend.dto.menuItem.CreateMenuItemRequestDto;
 import com.siteshkumar.zomato_clone_backend.dto.menuItem.CreateMenuItemResponseDto;
 import com.siteshkumar.zomato_clone_backend.dto.menuItem.MenuItemResponseDto;
@@ -11,4 +13,5 @@ public interface MenuItemService {
     UpdateMenuItemResponseDto updateMenuItem(Long restaurantId, Long menuItemId, UpdateMenuItemRequestDto request);
     void deleteMenuItem(Long restaurantId, Long menuItemId);
     MenuItemResponseDto getMenuItemById(Long restaurantId, Long menuItemId);
+    Page<MenuItemResponseDto> getAllMenuItems(Long restaurantId, Pageable pageable);
 }
