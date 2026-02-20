@@ -4,6 +4,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import com.siteshkumar.zomato_clone_backend.dto.menuItem.CreateMenuItemRequestDto;
 import com.siteshkumar.zomato_clone_backend.dto.menuItem.CreateMenuItemResponseDto;
+import com.siteshkumar.zomato_clone_backend.dto.menuItem.MenuItemResponseDto;
 import com.siteshkumar.zomato_clone_backend.dto.menuItem.UpdateMenuItemRequestDto;
 import com.siteshkumar.zomato_clone_backend.dto.menuItem.UpdateMenuItemResponseDto;
 import com.siteshkumar.zomato_clone_backend.entity.MenuItemEntity;
@@ -90,6 +91,22 @@ public class MenuItemServiceImpl implements MenuItemService {
         // Implementing soft delete
         menuItem.setAvailable(false);
         menuItemRepository.save(menuItem);
+    }
+
+    @Override
+    public MenuItemResponseDto getMenuItemById(Long restaurantId, Long menuItemId) {
+        MenuItemEntity menuItem = menuItemRepository.findByIdAndRestaurantId(menuItemId, restaurantId)
+                                .orElseThrow(() -> new ResourceNotFoundException("Menu item with id " + menuItemId + " not found in the restaurant id "+restaurantId));
+
+        if(! menuItem.isAvailable() || ! menuItem.getRestaurant().isActive())
+            throw new ResourceNotFoundException("Menu item not available");
+
+        return new MenuItemResponseDto(
+            menuItem.getId(),
+            menuItem.getName(),
+            menuItem.getPrice(),
+            menuItem.getRestaurant().getName()
+        );
     }
     
 }

@@ -32,6 +32,7 @@ public class RestaurantController {
     private final RestaurantService restaurantService;
     
     @PostMapping
+    @PreAuthorize("hasAnyRole('RESTAURANT', 'ADMIN')")
     public ResponseEntity<CreateRestaurantResponseDto> createRestaurant(@Valid @RequestBody CreateRestaurantRequestDto request){
         CreateRestaurantResponseDto createdRestaurant = restaurantService.createRestaurant(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdRestaurant);

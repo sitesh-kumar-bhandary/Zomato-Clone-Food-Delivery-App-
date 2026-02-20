@@ -31,12 +31,11 @@ public class SecurityConfig {
                 // public api's
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                .requestMatchers(HttpMethod.GET, "/restaurants").permitAll()
+                .requestMatchers(HttpMethod.GET, "/restaurants/**").permitAll()
 
                 // Only Restaurant's Api's
 
                 // Restaurant's and Admin combined Api's
-                .requestMatchers(HttpMethod.POST, "/restaurants").hasAnyRole("RESTAURANT", "ADMIN")
 
                 // Only Admin api's
 

@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.siteshkumar.zomato_clone_backend.dto.menuItem.CreateMenuItemRequestDto;
 import com.siteshkumar.zomato_clone_backend.dto.menuItem.CreateMenuItemResponseDto;
+import com.siteshkumar.zomato_clone_backend.dto.menuItem.MenuItemResponseDto;
 import com.siteshkumar.zomato_clone_backend.dto.menuItem.UpdateMenuItemRequestDto;
 import com.siteshkumar.zomato_clone_backend.dto.menuItem.UpdateMenuItemResponseDto;
 import com.siteshkumar.zomato_clone_backend.service.MenuItemService;
@@ -46,9 +48,11 @@ public class MenuItemController {
         return ResponseEntity.noContent().build();
     }
 
-    // public ResponseEntity<> getMenuItem(){
-
-    // }
+    @GetMapping("/{menuItemId}")
+    public ResponseEntity<MenuItemResponseDto> getMenuItemById(@PathVariable Long restaurantId, @PathVariable Long menuItemId){
+        MenuItemResponseDto response = menuItemService.getMenuItemById(restaurantId, menuItemId);
+        return ResponseEntity.ok(response);
+    }
 
     // public ResponseEntity<Page<>> getAllMenuItems(){
 
