@@ -1,5 +1,7 @@
 package com.siteshkumar.zomato_clone_backend.entity;
 
+import java.math.BigDecimal;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -30,6 +32,15 @@ public class CartItemEntity {
     @Id
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     private Long id;
+    
+    @Min(1)
+    private int quantity;
+
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal priceAtTime;
+
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal subTotal;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="cart_id", nullable = false)
@@ -37,8 +48,13 @@ public class CartItemEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="menu_item_id", nullable =  false)
-    private MenuItemEntity menuItems;
+    private MenuItemEntity menuItem;
 
-    @Min(1)
-    private int quantity;
+    public void updateQuantity(int quantity){
+        if(quantity < 1)
+            throw new IllegalArgumentException("Quantity must atleast 1");
+
+        this.quantity = quantity;
+        this.subTotal = this.priceAtTime.multiply(BigDecimal.valueOf(quantity));
+    }
 }
