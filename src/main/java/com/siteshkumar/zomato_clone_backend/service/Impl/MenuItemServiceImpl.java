@@ -16,6 +16,7 @@ import com.siteshkumar.zomato_clone_backend.entity.RestaurantEntity;
 import com.siteshkumar.zomato_clone_backend.entity.UserEntity;
 import com.siteshkumar.zomato_clone_backend.enums.Role;
 import com.siteshkumar.zomato_clone_backend.exception.ResourceNotFoundException;
+import com.siteshkumar.zomato_clone_backend.mapper.MenuItemMapper;
 import com.siteshkumar.zomato_clone_backend.repository.MenuItemRepository;
 import com.siteshkumar.zomato_clone_backend.repository.RestaurantRepository;
 import com.siteshkumar.zomato_clone_backend.service.MenuItemService;
@@ -29,6 +30,7 @@ public class MenuItemServiceImpl implements MenuItemService {
     private final AuthUtils authUtils;
     private final RestaurantRepository restaurantRepository;
     private final MenuItemRepository menuItemRepository;
+    private final MenuItemMapper menuItemMapper;
 
     @Override
     public CreateMenuItemResponseDto createMenuItem(Long restaurantId, CreateMenuItemRequestDto request) {
@@ -47,12 +49,7 @@ public class MenuItemServiceImpl implements MenuItemService {
 
         MenuItemEntity savedMenuItem = menuItemRepository.save(menuItem);
         
-        return new CreateMenuItemResponseDto(
-            savedMenuItem.getId(),
-            savedMenuItem.getName(),
-            savedMenuItem.getPrice(),
-            savedMenuItem.isAvailable()
-        );
+        return menuItemMapper.toCreateResponseDto(savedMenuItem);
     }
 
     @Override
@@ -74,13 +71,7 @@ public class MenuItemServiceImpl implements MenuItemService {
 
             MenuItemEntity savedMenuItem = menuItemRepository.save(menuItem);
 
-            return new UpdateMenuItemResponseDto(
-                savedMenuItem.getId(),
-                savedMenuItem.getRestaurant().getId(),
-                savedMenuItem.getName(),
-                savedMenuItem.getPrice(),
-                savedMenuItem.isAvailable()
-            );
+            return menuItemMapper.toUpdateResponeDto(savedMenuItem);
     }
 
     @Override
@@ -106,12 +97,7 @@ public class MenuItemServiceImpl implements MenuItemService {
         if(! menuItem.isAvailable() || ! menuItem.getRestaurant().isActive())
             throw new ResourceNotFoundException("Menu item not available");
 
-        return new MenuItemResponseDto(
-            menuItem.getId(),
-            menuItem.getName(),
-            menuItem.getPrice(),
-            menuItem.getRestaurant().getName()
-        );
+        return menuItemMapper.toResponseDto(menuItem);
     }
 
     @Override
@@ -141,13 +127,6 @@ public class MenuItemServiceImpl implements MenuItemService {
         else
             menuItems = menuItemRepository.findByRestaurantIdAndAvailableTrue(restaurantId, pageable);
 
-        return menuItems.map(menuItem ->
-            new MenuItemResponseDto(
-                    menuItem.getId(),
-                    menuItem.getName(),
-                    menuItem.getPrice(),
-                    restaurant.getName()
-            )
-        );
+        return menuItems.map(menuItemMapper::toResponseDto);
     }
 }

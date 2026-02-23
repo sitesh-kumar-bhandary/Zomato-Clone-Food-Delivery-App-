@@ -15,6 +15,7 @@ import com.siteshkumar.zomato_clone_backend.enums.AccountStatus;
 import com.siteshkumar.zomato_clone_backend.enums.Role;
 import com.siteshkumar.zomato_clone_backend.exception.AccountNotApprovedException;
 import com.siteshkumar.zomato_clone_backend.exception.ResourceNotFoundException;
+import com.siteshkumar.zomato_clone_backend.mapper.RestaurantMapper;
 import com.siteshkumar.zomato_clone_backend.repository.RestaurantRepository;
 import com.siteshkumar.zomato_clone_backend.security.CustomUserDetails;
 import com.siteshkumar.zomato_clone_backend.service.RestaurantService;
@@ -27,6 +28,7 @@ import lombok.RequiredArgsConstructor;
 public class RestaurantServiceImpl implements RestaurantService{
 
     private final AuthUtils authUtils;
+    private final RestaurantMapper restaurantMapper;
     private final RestaurantRepository restaurantRepository;
 
     @Override
@@ -47,12 +49,7 @@ public class RestaurantServiceImpl implements RestaurantService{
         restaurant.setOwner(user.getUser());
 
         RestaurantEntity savedRestaurant = restaurantRepository.save(restaurant);
-        return new CreateRestaurantResponseDto(
-            savedRestaurant.getId(),
-            savedRestaurant.getName(),
-            savedRestaurant.getCity(),
-            savedRestaurant.isActive()
-        );
+        return restaurantMapper.toCreateResponseDto(savedRestaurant);
     }
 
     @Override
@@ -71,12 +68,7 @@ public class RestaurantServiceImpl implements RestaurantService{
             restaurant.setName(request.getName());
 
         RestaurantEntity updatedRestaurant = restaurantRepository.save(restaurant);
-        return new UpdateRestaurantResponseDto(
-            updatedRestaurant.getId(),
-            updatedRestaurant.getName(),
-            updatedRestaurant.getCity(),
-            updatedRestaurant.isActive()
-        );
+        return restaurantMapper.toUpdateResponseDto(updatedRestaurant);
     }
 
     @Override
@@ -100,13 +92,7 @@ public class RestaurantServiceImpl implements RestaurantService{
 
         Page<RestaurantEntity> restaurantPages = restaurantRepository.findByCityIgnoreCaseAndActiveTrue(city, pageable);
 
-        return restaurantPages.map((restaurant -> 
-            new RestaurantResponseDto(
-                restaurant.getId(),
-                restaurant.getName(),
-                restaurant.getCity()
-            )
-        ));
+        return restaurantPages.map(restaurantMapper::toResponseDto);
     }
 
     @Override
@@ -114,10 +100,6 @@ public class RestaurantServiceImpl implements RestaurantService{
         RestaurantEntity restaurant = restaurantRepository.findById(id)
                                     .orElseThrow(() -> new ResourceNotFoundException("Restaurant with id " + id + " not found"));
 
-        return new RestaurantResponseDto(
-            restaurant.getId(),
-            restaurant.getName(),
-            restaurant.getCity()
-        );
+        return restaurantMapper.toResponseDto(restaurant);
     }
 }

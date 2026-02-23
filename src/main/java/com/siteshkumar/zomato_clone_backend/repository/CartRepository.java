@@ -7,5 +7,5 @@ import com.siteshkumar.zomato_clone_backend.entity.CartEntity;
 
 @Repository
 public interface CartRepository extends JpaRepository<CartEntity, Long>{
-    Optional<CartEntity> findById(Long id);
+    Optional<CartEntity> findByUserId(Long id);
 }

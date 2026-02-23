@@ -32,6 +32,12 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(apiError, HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ApiError> handleBadRequestException(ConflictException ex){
+        ApiError apiError = new ApiError(ex.getMessage(), HttpStatus.CONFLICT);
+        return new ResponseEntity<>(apiError, HttpStatus.CONFLICT);
+    }
+
 
     @ExceptionHandler(AccountNotApprovedException.class)
     public ResponseEntity<ApiError> handleAccountNotApprovedException(AccountNotApprovedException ex){
