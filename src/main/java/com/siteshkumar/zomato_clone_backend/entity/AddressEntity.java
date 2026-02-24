@@ -1,6 +1,6 @@
 package com.siteshkumar.zomato_clone_backend.entity;
 
-import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -31,23 +31,8 @@ public class AddressEntity {
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     private Long id;
     
-    @Column(nullable = false)
-    private String label;
-
-    @Column(nullable = false)
-    private String street;
-
-    @Column(nullable = false)
-    private String area;
-
-    @Column(nullable = false)
-    private String city;
-
-    @Column(nullable = false)
-    private String state;
-
-    @Column(nullable = false)
-    private String pincode;
+    @Embedded
+    private AddressDetails addressDetails;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="user_id", nullable = false)

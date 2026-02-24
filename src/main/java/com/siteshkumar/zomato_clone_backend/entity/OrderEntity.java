@@ -1,10 +1,12 @@
 package com.siteshkumar.zomato_clone_backend.entity;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-
+import java.util.ArrayList;
+import java.util.List;
 import com.siteshkumar.zomato_clone_backend.enums.OrderStatus;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -15,6 +17,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -29,7 +32,6 @@ import lombok.Setter;
     indexes = {
         @Index(name="order_user_ind", columnList = "user_id"),
         @Index(name="order_status_ind", columnList = "status"),
-        @Index(name="order_created_at_ind", columnList = "created_at")
     }
 )
 public class OrderEntity extends AuditableEntity{
@@ -49,6 +51,13 @@ public class OrderEntity extends AuditableEntity{
     @JoinColumn(name="user_id", nullable=false)
     private UserEntity user;
 
-    @Column(name="created_at", nullable = false)
-    private LocalDateTime createdAt;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="restaurant_id", nullable = false)
+    private RestaurantEntity restaurant;
+
+    @Embedded
+    private AddressDetails deliveryDetails;
+
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OrderItemEntity> items = new ArrayList<>();
 }

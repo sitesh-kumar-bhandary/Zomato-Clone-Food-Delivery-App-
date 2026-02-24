@@ -23,7 +23,7 @@ import lombok.Setter;
 @Table(
     name="order_items",
     indexes = {
-        @Index(name = "order_item_order_ind", columnList = "order_id", unique = true)
+        @Index(name = "order_item_order_ind", columnList = "order_id")
     }
 )
 public class OrderItemEntity {
@@ -37,7 +37,7 @@ public class OrderItemEntity {
     private int quantity;
 
     @Column(nullable = false, precision = 10, scale = 2, updatable = false)
-    private BigDecimal price;
+    private BigDecimal priceAtOrderTime;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="order_id", nullable = false)
