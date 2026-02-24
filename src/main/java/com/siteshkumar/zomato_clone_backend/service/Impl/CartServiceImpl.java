@@ -7,6 +7,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import com.siteshkumar.zomato_clone_backend.dto.cart.AddCartItemRequestDto;
 import com.siteshkumar.zomato_clone_backend.dto.cart.CartSummaryResponseDto;
+import com.siteshkumar.zomato_clone_backend.dto.cart.UpdateCartItemRequestDto;
 import com.siteshkumar.zomato_clone_backend.entity.CartEntity;
 import com.siteshkumar.zomato_clone_backend.entity.CartItemEntity;
 import com.siteshkumar.zomato_clone_backend.entity.MenuItemEntity;
@@ -90,6 +91,30 @@ public class CartServiceImpl implements CartService {
 
         cart.setTotalAmount(total);
         cart.setTotalItems(totalItems);
+    }
+
+    @Override
+    public CartSummaryResponseDto updateItem(Long cartItemId, UpdateCartItemRequestDto request) {
+        UserEntity user = authUtils.getCurrentLoggedInUser().getUser();
+
+        CartEntity cart = cartRepository
+                        .findByUserId(user.getId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Cart not found"));
+
+        CartItemEntity cartItem = cart
+                                .getCartItems()
+                                .stream()
+                                .filter(item -> item.getId().equals(cartItemId))
+                                .findFirst()
+                                .orElseThrow(() -> new ResourceNotFoundException("Cart item not found"));
+
+        cartItem.updateQuantity(request.getQuantity());
+
+        recalculateCart(cart);
+
+        CartEntity savedCart = cartRepository.save(cart);
+
+        return cartMapper.toCartSummaryDto(savedCart);
     }
     
 }
