@@ -116,5 +116,45 @@ public class CartServiceImpl implements CartService {
 
         return cartMapper.toCartSummaryDto(savedCart);
     }
-    
+
+    @Override
+    public CartSummaryResponseDto deleteItem(Long cartItemId) {
+        UserEntity user = authUtils.getCurrentLoggedInUser().getUser();
+
+        CartEntity cart = cartRepository
+                        .findByUserId(user.getId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Cart not found"));
+
+        CartItemEntity cartItem = cart
+                                .getCartItems()
+                                .stream()
+                                .filter(item -> item.getId().equals(cartItemId))
+                                .findFirst()
+                                .orElseThrow(() -> new ResourceNotFoundException("Cart item not found"));
+
+        cart.getCartItems().remove(cartItem);
+
+        recalculateCart(cart);
+
+        CartEntity savedCart = cartRepository.save(cart);
+
+        return cartMapper.toCartSummaryDto(savedCart);
+    }
+
+    @Override
+    public CartSummaryResponseDto cartSummary() {
+        UserEntity user = authUtils.getCurrentLoggedInUser().getUser();
+
+        CartEntity cart = cartRepository
+                        .findByUserId(user.getId())
+                        .orElseGet(() -> {
+                            CartEntity newCart = new CartEntity();
+                            newCart.setCartItems(new HashSet<>());
+                            newCart.setTotalAmount(BigDecimal.ZERO);
+                            newCart.setTotalItems(0);
+                            return newCart;
+                        });
+
+        return cartMapper.toCartSummaryDto(cart);
+    }    
 }
