@@ -26,6 +26,12 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(apiError, HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(AddressNotFoundException.class)
+    public ResponseEntity<ApiError> handleAddressNotFoundException(AddressNotFoundException ex){
+        ApiError apiError = new ApiError(ex.getMessage(), HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(apiError, HttpStatus.NOT_FOUND);
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiError> handleIllegalArgumentException(IllegalArgumentException ex){
         ApiError apiError = new ApiError(ex.getMessage(), HttpStatus.BAD_REQUEST);

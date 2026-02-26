@@ -20,6 +20,8 @@ import com.siteshkumar.zomato_clone_backend.repository.CartRepository;
 import com.siteshkumar.zomato_clone_backend.repository.MenuItemRepository;
 import com.siteshkumar.zomato_clone_backend.service.CartService;
 import com.siteshkumar.zomato_clone_backend.utils.AuthUtils;
+import com.siteshkumar.zomato_clone_backend.utils.CartUtils;
+
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -27,6 +29,7 @@ import lombok.RequiredArgsConstructor;
 public class CartServiceImpl implements CartService {
     private final MenuItemRepository menuItemRepository;
     private final CartRepository cartRepository;
+    private final CartUtils cartUtils;
     private final AuthUtils authUtils;
     private final CartMapper cartMapper;
 
@@ -73,24 +76,11 @@ public class CartServiceImpl implements CartService {
             cart.getCartItems().add(cartItem);
         }
 
-        recalculateCart(cart);
+        cartUtils.recalculateCart(cart);
 
         CartEntity savedCart = cartRepository.save(cart);
 
         return cartMapper.toCartSummaryDto(savedCart);
-    }
-
-    private void recalculateCart(CartEntity cart){
-        BigDecimal total = BigDecimal.ZERO;
-        int totalItems = 0;
-
-        for(CartItemEntity item : cart.getCartItems()){
-            total = total.add(item.getSubTotal());
-            totalItems += item.getQuantity();
-        }
-
-        cart.setTotalAmount(total);
-        cart.setTotalItems(totalItems);
     }
 
     @Override
@@ -110,7 +100,7 @@ public class CartServiceImpl implements CartService {
 
         cartItem.updateQuantity(request.getQuantity());
 
-        recalculateCart(cart);
+        cartUtils.recalculateCart(cart);
 
         CartEntity savedCart = cartRepository.save(cart);
 
@@ -134,7 +124,7 @@ public class CartServiceImpl implements CartService {
 
         cart.getCartItems().remove(cartItem);
 
-        recalculateCart(cart);
+        cartUtils.recalculateCart(cart);
 
         CartEntity savedCart = cartRepository.save(cart);
 
