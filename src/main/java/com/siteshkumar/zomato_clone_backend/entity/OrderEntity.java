@@ -19,6 +19,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -43,9 +44,10 @@ public class OrderEntity extends AuditableEntity{
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal totalAmount;
 
+    @Setter(AccessLevel.NONE)
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private OrderStatus status;
+    private OrderStatus status = OrderStatus.CREATED;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="user_id", nullable=false)
@@ -64,5 +66,15 @@ public class OrderEntity extends AuditableEntity{
     public void addItem(OrderItemEntity item) {
         items.add(item);
         item.setOrder(this);
+    }
+
+    public void updateStatus(OrderStatus newStatus){
+        if(this.status == newStatus)
+            return;
+
+        if(! this.status.canTransitionTo(newStatus))
+            throw new IllegalStateException("Cannot transition from " + this.status + " to " + newStatus);
+
+        this.status = newStatus;
     }
 }

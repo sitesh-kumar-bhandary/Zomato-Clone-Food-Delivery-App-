@@ -1,7 +1,8 @@
 package com.siteshkumar.zomato_clone_backend.service.Impl;
 
 import java.math.BigDecimal;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import com.siteshkumar.zomato_clone_backend.dto.order.OrderResponseDto;
@@ -13,7 +14,6 @@ import com.siteshkumar.zomato_clone_backend.entity.CartItemEntity;
 import com.siteshkumar.zomato_clone_backend.entity.OrderEntity;
 import com.siteshkumar.zomato_clone_backend.entity.OrderItemEntity;
 import com.siteshkumar.zomato_clone_backend.entity.UserEntity;
-import com.siteshkumar.zomato_clone_backend.enums.OrderStatus;
 import com.siteshkumar.zomato_clone_backend.exception.AddressNotFoundException;
 import com.siteshkumar.zomato_clone_backend.exception.ResourceNotFoundException;
 import com.siteshkumar.zomato_clone_backend.mapper.OrderMapper;
@@ -62,7 +62,6 @@ public class OrderServiceImpl implements OrderService {
         OrderEntity order = new OrderEntity();
         order.setUser(user);
         order.setRestaurant(cart.getRestaurant());
-        order.setStatus(OrderStatus.CREATED);
         order.setTotalAmount(cart.getTotalAmount());
 
         // Saving address snapshot
@@ -98,5 +97,14 @@ public class OrderServiceImpl implements OrderService {
         cartRepository.save(cart);
 
         return orderMapper.toResponseDto(savedOrder);
+    }
+
+    @Override
+    public Page<OrderResponseDto> getMyOrders(Pageable pageable) {
+        UserEntity user = authUtils.getCurrentLoggedInUser().getUser();
+
+        Page<OrderEntity> orderPages = orderRepository.findByUser_Id(user.getId(), pageable);
+
+        return orderPages.map(orderMapper::toResponseDto);
     }
 }

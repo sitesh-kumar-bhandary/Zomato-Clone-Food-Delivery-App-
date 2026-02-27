@@ -1,8 +1,13 @@
 package com.siteshkumar.zomato_clone_backend.controller;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,5 +30,13 @@ public class OrderController {
     public ResponseEntity<OrderResponseDto> placeOrder(@Valid @RequestBody PlaceOrderRequestDto request) {
         OrderResponseDto placedOrder = orderService.placeOrder(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(placedOrder);
+    }
+
+    @GetMapping("/my")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<Page<OrderResponseDto>> getMyOrders(
+        @PageableDefault(size=10, sort="createdAt", direction=Sort.Direction.DESC) Pageable pageable){
+        Page<OrderResponseDto> page = orderService.getMyOrders(pageable);
+        return ResponseEntity.ok(page);
     }
 }
