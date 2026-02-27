@@ -7,6 +7,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import com.siteshkumar.zomato_clone_backend.dto.order.OrderResponseDto;
 import com.siteshkumar.zomato_clone_backend.dto.order.PlaceOrderRequestDto;
+import com.siteshkumar.zomato_clone_backend.dto.order.UpdateOrderStatusRequestDto;
 import com.siteshkumar.zomato_clone_backend.entity.AddressDetails;
 import com.siteshkumar.zomato_clone_backend.entity.AddressEntity;
 import com.siteshkumar.zomato_clone_backend.entity.CartEntity;
@@ -14,6 +15,8 @@ import com.siteshkumar.zomato_clone_backend.entity.CartItemEntity;
 import com.siteshkumar.zomato_clone_backend.entity.OrderEntity;
 import com.siteshkumar.zomato_clone_backend.entity.OrderItemEntity;
 import com.siteshkumar.zomato_clone_backend.entity.UserEntity;
+import com.siteshkumar.zomato_clone_backend.enums.OrderStatus;
+import com.siteshkumar.zomato_clone_backend.enums.Role;
 import com.siteshkumar.zomato_clone_backend.exception.AddressNotFoundException;
 import com.siteshkumar.zomato_clone_backend.exception.ResourceNotFoundException;
 import com.siteshkumar.zomato_clone_backend.mapper.OrderMapper;
@@ -116,5 +119,52 @@ public class OrderServiceImpl implements OrderService {
        Page<OrderEntity> orderPage = orderRepository.findByRestaurant_Owner_Id(user.getId(), pageable);
 
        return orderPage.map(orderMapper::toResponseDto);
+    }
+
+    @Override
+    public OrderResponseDto cancelMyOrder(Long orderId) {
+        UserEntity user = authUtils.getCurrentLoggedInUser().getUser();
+
+        OrderEntity order = orderRepository
+                            .findById(orderId)
+                            .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+
+        // for customer and restaurant cancellation
+        boolean isCustomer = user.getRole() == Role.CUSTOMER && order.getUser().getId().equals(user.getId());
+
+        boolean isRestaurant = user.getRole() == Role.RESTAURANT && order.getRestaurant().getOwner().getId().equals(user.getId());
+
+        if(! isCustomer && ! isRestaurant)
+            throw new AccessDeniedException("You are not allowed to cancel this order");
+
+        if(order.getStatus() == OrderStatus.OUT_FOR_DELIVERY || 
+            order.getStatus() == OrderStatus.DELIVERED || 
+            order.getStatus() == OrderStatus.CANCELLED
+        ){
+            throw new IllegalStateException("Order can not be cancelled at this stage");
+        }
+
+        order.updateStatus(OrderStatus.CANCELLED);
+        return orderMapper.toResponseDto(order);
+    }
+
+    @Override
+    public OrderResponseDto updateOrderStatus(Long orderId, UpdateOrderStatusRequestDto request) {
+        if(request.getStatus() == OrderStatus.CANCELLED)
+            throw new IllegalArgumentException("Use cancel api");
+
+        UserEntity user = authUtils.getCurrentLoggedInUser().getUser();
+
+        OrderEntity order = orderRepository
+                            .findById(orderId)
+                            .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+
+        if(! order.getRestaurant().getOwner().getId().equals(user.getId()))
+            throw new AccessDeniedException("You are not allowed to update this order");
+
+        order.updateStatus(request.getStatus());
+
+        OrderEntity updatedOrder = orderRepository.save(order);
+        return orderMapper.toResponseDto(updatedOrder);
     }
 }

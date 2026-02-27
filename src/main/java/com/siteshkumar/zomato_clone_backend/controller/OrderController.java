@@ -8,12 +8,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.siteshkumar.zomato_clone_backend.dto.order.OrderResponseDto;
 import com.siteshkumar.zomato_clone_backend.dto.order.PlaceOrderRequestDto;
+import com.siteshkumar.zomato_clone_backend.dto.order.UpdateOrderStatusRequestDto;
 import com.siteshkumar.zomato_clone_backend.service.OrderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -40,11 +43,25 @@ public class OrderController {
         return ResponseEntity.ok(page);
     }
 
-    @GetMapping("/restaurants")
+    @GetMapping("/restaurant")
     @PreAuthorize("hasRole('RESTAURANT')")
     public ResponseEntity<Page<OrderResponseDto>> getRestaurantOrders(
         @PageableDefault(size=10, sort="createdAt", direction = Sort.Direction.DESC) Pageable pageable){
             Page<OrderResponseDto> page = orderService.getRestaurantOrders(pageable);
             return ResponseEntity.ok(page);
+    }
+
+    @PatchMapping("/{orderId}/status")
+    @PreAuthorize("hasRole('RESTAURANT')")
+    public ResponseEntity<OrderResponseDto> updateOrderStatus(@PathVariable Long orderId, @Valid @RequestBody UpdateOrderStatusRequestDto request){
+        OrderResponseDto updatedOrderStatus = orderService.updateOrderStatus(orderId, request);
+        return ResponseEntity.ok(updatedOrderStatus);
+    }
+
+    @PatchMapping("/{orderId}/cancel")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'RESTAURANT')")
+    public ResponseEntity<OrderResponseDto> cancelOrder(@PathVariable Long orderId){
+        OrderResponseDto cancelledOrder = orderService.cancelMyOrder(orderId);
+        return ResponseEntity.ok(cancelledOrder);
     }
 }
