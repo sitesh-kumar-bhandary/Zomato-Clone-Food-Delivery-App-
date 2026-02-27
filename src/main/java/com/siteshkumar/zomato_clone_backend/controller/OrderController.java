@@ -39,4 +39,12 @@ public class OrderController {
         Page<OrderResponseDto> page = orderService.getMyOrders(pageable);
         return ResponseEntity.ok(page);
     }
+
+    @GetMapping("/restaurants")
+    @PreAuthorize("hasRole('RESTAURANT')")
+    public ResponseEntity<Page<OrderResponseDto>> getRestaurantOrders(
+        @PageableDefault(size=10, sort="createdAt", direction = Sort.Direction.DESC) Pageable pageable){
+            Page<OrderResponseDto> page = orderService.getRestaurantOrders(pageable);
+            return ResponseEntity.ok(page);
+    }
 }

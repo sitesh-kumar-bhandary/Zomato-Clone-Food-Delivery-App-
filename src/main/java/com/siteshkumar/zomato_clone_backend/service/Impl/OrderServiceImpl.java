@@ -107,4 +107,14 @@ public class OrderServiceImpl implements OrderService {
 
         return orderPages.map(orderMapper::toResponseDto);
     }
+
+    @Override
+    public Page<OrderResponseDto> getRestaurantOrders(Pageable pageable) {
+
+       UserEntity user = authUtils.getCurrentLoggedInUser().getUser();
+        
+       Page<OrderEntity> orderPage = orderRepository.findByRestaurant_Owner_Id(user.getId(), pageable);
+
+       return orderPage.map(orderMapper::toResponseDto);
+    }
 }

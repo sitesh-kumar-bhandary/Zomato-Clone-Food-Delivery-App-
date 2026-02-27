@@ -7,6 +7,13 @@ import com.siteshkumar.zomato_clone_backend.dto.order.PlaceOrderRequestDto;
 
 public interface  OrderService {
 
+    // Customer api
     OrderResponseDto placeOrder(PlaceOrderRequestDto request);
     Page<OrderResponseDto> getMyOrders(Pageable pageable);
+
+    // Restaurant api
+    Page<OrderResponseDto> getRestaurantOrders(Pageable pageable);
+
+    // Both 
+    
 }

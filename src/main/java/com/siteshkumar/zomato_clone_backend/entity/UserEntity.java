@@ -1,5 +1,7 @@
 package com.siteshkumar.zomato_clone_backend.entity;
 
+import java.util.List;
+
 import com.siteshkumar.zomato_clone_backend.enums.AccountStatus;
 import com.siteshkumar.zomato_clone_backend.enums.Role;
 import jakarta.persistence.Column;
@@ -10,6 +12,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -51,4 +54,7 @@ public class UserEntity extends AuditableEntity{
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
+
+    @OneToMany(mappedBy = "owner")
+    private List<RestaurantEntity> restaurants;
 }

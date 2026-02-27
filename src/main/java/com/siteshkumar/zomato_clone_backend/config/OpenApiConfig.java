@@ -24,7 +24,7 @@ public class OpenApiConfig {
             ))
 
             .info(new Info()
-                .title("Zomato Clone Backend Application")
+                .title("Zomato Clone - Food Delivery Application Backend")
                 .description("This the complete backend for zomato clone")
                 .version("1.0.0")
             );
