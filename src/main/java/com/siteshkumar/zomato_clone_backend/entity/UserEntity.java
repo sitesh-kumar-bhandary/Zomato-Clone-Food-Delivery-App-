@@ -47,6 +47,9 @@ public class UserEntity extends AuditableEntity{
     @Column(nullable = false, length = 255)
     private String password;
 
+    @Column(nullable = false)
+    private boolean blocked = false;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private AccountStatus status;

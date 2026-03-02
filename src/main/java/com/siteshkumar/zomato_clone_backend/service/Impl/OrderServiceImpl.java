@@ -43,6 +43,10 @@ public class OrderServiceImpl implements OrderService {
     public OrderResponseDto placeOrder(PlaceOrderRequestDto request) {
         UserEntity user = authUtils.getCurrentLoggedInUser().getUser();
 
+        if (user.isBlocked()) {
+            throw new AccessDeniedException("Your account is blocked by admin");
+        }
+
         CartEntity cart = cartRepository
                         .findByUserId(user.getId())
                         .orElseThrow(() -> new ResourceNotFoundException("Cart not found"));
@@ -52,6 +56,14 @@ public class OrderServiceImpl implements OrderService {
 
         if(cart.getRestaurant() == null)
             throw new IllegalStateException("Cart restaurant is empty");
+
+        if (cart.getRestaurant().isBlocked()) {
+            throw new AccessDeniedException("Restaurant is blocked by admin");
+        }
+
+        if (!cart.getRestaurant().isActive()) {
+            throw new IllegalStateException("Restaurant is currently closed");
+        }
 
         AddressEntity address = addressRepository
                             .findById(request.getAddressId())
@@ -115,6 +127,10 @@ public class OrderServiceImpl implements OrderService {
     public Page<OrderResponseDto> getRestaurantOrders(Pageable pageable) {
 
        UserEntity user = authUtils.getCurrentLoggedInUser().getUser();
+
+       if (user.isBlocked()) {
+            throw new AccessDeniedException("Your account is blocked by admin");
+        }
         
        Page<OrderEntity> orderPage = orderRepository.findByRestaurant_Owner_Id(user.getId(), pageable);
 
@@ -124,6 +140,10 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public OrderResponseDto cancelMyOrder(Long orderId) {
         UserEntity user = authUtils.getCurrentLoggedInUser().getUser();
+
+        if (user.isBlocked()) {
+            throw new AccessDeniedException("Your account is blocked by admin");
+        }
 
         OrderEntity order = orderRepository
                             .findById(orderId)
@@ -154,6 +174,10 @@ public class OrderServiceImpl implements OrderService {
             throw new IllegalArgumentException("Use cancel api");
 
         UserEntity user = authUtils.getCurrentLoggedInUser().getUser();
+
+        if (user.isBlocked()) {
+            throw new AccessDeniedException("Your account is blocked by admin");
+        }
 
         OrderEntity order = orderRepository
                             .findById(orderId)

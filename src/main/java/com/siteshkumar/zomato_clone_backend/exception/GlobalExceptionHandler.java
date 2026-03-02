@@ -20,6 +20,12 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(apiError, HttpStatus.CONFLICT);
     }
 
+    @ExceptionHandler(UserAlreadyBlockedException.class)
+    public ResponseEntity<ApiError> handleUserAlreadyBlockedException(UserAlreadyBlockedException ex){
+        ApiError apiError = new ApiError(ex.getMessage(), HttpStatus.CONFLICT);
+        return new ResponseEntity<>(apiError, HttpStatus.CONFLICT);
+    }
+
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiError> handleResourceNotFoundException(ResourceNotFoundException ex){
         ApiError apiError = new ApiError(ex.getMessage(), HttpStatus.NOT_FOUND);

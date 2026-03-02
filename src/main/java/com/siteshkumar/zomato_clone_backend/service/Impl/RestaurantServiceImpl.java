@@ -90,14 +90,14 @@ public class RestaurantServiceImpl implements RestaurantService{
         if(city == null || city.trim().isEmpty())
             return Page.empty(pageable);
 
-        Page<RestaurantEntity> restaurantPages = restaurantRepository.findByCityIgnoreCaseAndActiveTrue(city, pageable);
+        Page<RestaurantEntity> restaurantPages = restaurantRepository.findByCityIgnoreCaseAndActiveTrueAndBlockedFalse(city, pageable);
 
         return restaurantPages.map(restaurantMapper::toResponseDto);
     }
 
     @Override
     public RestaurantResponseDto getRestaurantById(Long id) {
-        RestaurantEntity restaurant = restaurantRepository.findById(id)
+        RestaurantEntity restaurant = restaurantRepository.findByIdAndBlockedFalse(id)
                                     .orElseThrow(() -> new ResourceNotFoundException("Restaurant with id " + id + " not found"));
 
         return restaurantMapper.toResponseDto(restaurant);

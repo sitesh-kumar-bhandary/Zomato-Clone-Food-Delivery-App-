@@ -39,6 +39,9 @@ public class RestaurantEntity extends AuditableEntity{
     @Column(nullable = false)
     private boolean active = true;
 
+    @Column(nullable = false)
+    private boolean blocked = false;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name="user_id")
     private UserEntity owner;
