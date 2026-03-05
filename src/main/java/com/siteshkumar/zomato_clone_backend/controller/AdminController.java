@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.siteshkumar.zomato_clone_backend.dto.admin.AdminReportSummaryDto;
 import com.siteshkumar.zomato_clone_backend.dto.order.OrderResponseDto;
 import com.siteshkumar.zomato_clone_backend.enums.OrderStatus;
 import com.siteshkumar.zomato_clone_backend.service.AdminService;
@@ -56,5 +58,12 @@ public class AdminController {
     public ResponseEntity<Void> unblockRestaurant(@PathVariable Long id){
         adminService.unblockRestaurant(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/reports/summary")
+    public ResponseEntity<AdminReportSummaryDto> getSummary(){
+        AdminReportSummaryDto summary = adminService.getSummary();
+        return ResponseEntity.ok(summary);
     }
 }
