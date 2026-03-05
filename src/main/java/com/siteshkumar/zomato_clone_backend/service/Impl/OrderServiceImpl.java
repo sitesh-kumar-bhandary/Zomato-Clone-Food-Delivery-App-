@@ -23,6 +23,7 @@ import com.siteshkumar.zomato_clone_backend.mapper.OrderMapper;
 import com.siteshkumar.zomato_clone_backend.repository.AddressRepository;
 import com.siteshkumar.zomato_clone_backend.repository.CartRepository;
 import com.siteshkumar.zomato_clone_backend.repository.OrderRepository;
+import com.siteshkumar.zomato_clone_backend.service.InventoryService;
 import com.siteshkumar.zomato_clone_backend.service.OrderService;
 import com.siteshkumar.zomato_clone_backend.utils.AuthUtils;
 import com.siteshkumar.zomato_clone_backend.utils.CartUtils;
@@ -35,6 +36,7 @@ public class OrderServiceImpl implements OrderService {
     private final AuthUtils authUtils;
     private final CartUtils cartUtils;
     private final OrderMapper orderMapper;
+    private final InventoryService inventoryService;
     private final OrderRepository orderRepository;
     private final CartRepository cartRepository;
     private final AddressRepository addressRepository;
@@ -48,13 +50,13 @@ public class OrderServiceImpl implements OrderService {
         }
 
         CartEntity cart = cartRepository
-                        .findByUserId(user.getId())
-                        .orElseThrow(() -> new ResourceNotFoundException("Cart not found"));
+                .findByUserId(user.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Cart not found"));
 
-        if(cart.getCartItems().isEmpty())
+        if (cart.getCartItems().isEmpty())
             throw new IllegalStateException("Cart is empty");
 
-        if(cart.getRestaurant() == null)
+        if (cart.getRestaurant() == null)
             throw new IllegalStateException("Cart restaurant is empty");
 
         if (cart.getRestaurant().isBlocked()) {
@@ -66,10 +68,10 @@ public class OrderServiceImpl implements OrderService {
         }
 
         AddressEntity address = addressRepository
-                            .findById(request.getAddressId())
-                            .orElseThrow(() -> new AddressNotFoundException("Please add the address first to place the order"));
+                .findById(request.getAddressId())
+                .orElseThrow(() -> new AddressNotFoundException("Please add the address first to place the order"));
 
-        if(! address.getUser().getId().equals(user.getId()))
+        if (!address.getUser().getId().equals(user.getId()))
             throw new AccessDeniedException("Address does not belong to current user");
 
         cartUtils.recalculateCart(cart);
@@ -91,6 +93,12 @@ public class OrderServiceImpl implements OrderService {
         snapshot.setPincode(source.getPincode());
 
         order.setDeliveryDetails(snapshot);
+
+        for (CartItemEntity item : cart.getCartItems()) {
+            inventoryService.deductStock(
+                    item.getMenuItem().getId(),
+                    item.getQuantity());
+        }
 
         // Converting cart item --> order item
         for (CartItemEntity cartItem : cart.getCartItems()) {
@@ -126,15 +134,15 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public Page<OrderResponseDto> getRestaurantOrders(Pageable pageable) {
 
-       UserEntity user = authUtils.getCurrentLoggedInUser().getUser();
+        UserEntity user = authUtils.getCurrentLoggedInUser().getUser();
 
-       if (user.isBlocked()) {
+        if (user.isBlocked()) {
             throw new AccessDeniedException("Your account is blocked by admin");
         }
-        
-       Page<OrderEntity> orderPage = orderRepository.findByRestaurant_Owner_Id(user.getId(), pageable);
 
-       return orderPage.map(orderMapper::toResponseDto);
+        Page<OrderEntity> orderPage = orderRepository.findByRestaurant_Owner_Id(user.getId(), pageable);
+
+        return orderPage.map(orderMapper::toResponseDto);
     }
 
     @Override
@@ -146,22 +154,28 @@ public class OrderServiceImpl implements OrderService {
         }
 
         OrderEntity order = orderRepository
-                            .findById(orderId)
-                            .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+                .findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
 
         // for customer and restaurant cancellation
         boolean isCustomer = user.getRole() == Role.CUSTOMER && order.getUser().getId().equals(user.getId());
 
-        boolean isRestaurant = user.getRole() == Role.RESTAURANT && order.getRestaurant().getOwner().getId().equals(user.getId());
+        boolean isRestaurant = user.getRole() == Role.RESTAURANT
+                && order.getRestaurant().getOwner().getId().equals(user.getId());
 
-        if(! isCustomer && ! isRestaurant)
+        if (!isCustomer && !isRestaurant)
             throw new AccessDeniedException("You are not allowed to cancel this order");
 
-        if(order.getStatus() == OrderStatus.OUT_FOR_DELIVERY || 
-            order.getStatus() == OrderStatus.DELIVERED || 
-            order.getStatus() == OrderStatus.CANCELLED
-        ){
+        if (order.getStatus() == OrderStatus.OUT_FOR_DELIVERY ||
+                order.getStatus() == OrderStatus.DELIVERED ||
+                order.getStatus() == OrderStatus.CANCELLED) {
             throw new IllegalStateException("Order can not be cancelled at this stage");
+        }
+
+        for (OrderItemEntity item : order.getItems()) {
+            inventoryService.restoreStock(
+                    item.getMenuItem().getId(),
+                    item.getQuantity());
         }
 
         order.updateStatus(OrderStatus.CANCELLED);
@@ -170,7 +184,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public OrderResponseDto updateOrderStatus(Long orderId, UpdateOrderStatusRequestDto request) {
-        if(request.getStatus() == OrderStatus.CANCELLED)
+        if (request.getStatus() == OrderStatus.CANCELLED)
             throw new IllegalArgumentException("Use cancel api");
 
         UserEntity user = authUtils.getCurrentLoggedInUser().getUser();
@@ -180,10 +194,10 @@ public class OrderServiceImpl implements OrderService {
         }
 
         OrderEntity order = orderRepository
-                            .findById(orderId)
-                            .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+                .findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
 
-        if(! order.getRestaurant().getOwner().getId().equals(user.getId()))
+        if (!order.getRestaurant().getOwner().getId().equals(user.getId()))
             throw new AccessDeniedException("You are not allowed to update this order");
 
         order.updateStatus(request.getStatus());

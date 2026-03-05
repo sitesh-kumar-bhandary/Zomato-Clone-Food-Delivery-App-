@@ -38,6 +38,9 @@ public class MenuItemEntity extends AuditableEntity{
     private BigDecimal price;
 
     @Column(nullable = false)
+    private Integer stock = 0;
+
+    @Column(nullable = false)
     private boolean available = true;
 
     @ManyToOne(fetch = FetchType.LAZY)
