@@ -2,10 +2,12 @@ package com.siteshkumar.zomato_clone_backend.dto.menuItem;
 
 import java.math.BigDecimal;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class MenuItemResponseDto {

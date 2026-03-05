@@ -11,6 +11,7 @@ import com.siteshkumar.zomato_clone_backend.entity.RestaurantEntity;
 public interface RestaurantRepository extends JpaRepository<RestaurantEntity, Long>{
 
     Page<RestaurantEntity> findByCityIgnoreCaseAndActiveTrueAndBlockedFalse(String city, Pageable pageable);
+    Page<RestaurantEntity> findByNameContainingIgnoreCase(String name, Pageable pageable);
     Page<RestaurantEntity> findByActiveTrue(Pageable pageable);
     Optional<RestaurantEntity> findByIdAndBlockedFalse(Long id);
 }

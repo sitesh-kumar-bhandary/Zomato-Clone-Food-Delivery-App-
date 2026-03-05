@@ -19,5 +19,6 @@ public interface MenuItemRepository extends JpaRepository<MenuItemEntity, Long>{
     
     Optional<MenuItemEntity> findByIdAndRestaurantId(Long menuItemId, Long restaurantId);
     Page<MenuItemEntity> findByRestaurantId(Long restaurantId, Pageable pageable);
+    Page<MenuItemEntity> findByNameContainingIgnoreCase(String name, Pageable pageable);
     Page<MenuItemEntity> findByRestaurantIdAndAvailableTrue(Long restaurantId, Pageable pageable);
 }
