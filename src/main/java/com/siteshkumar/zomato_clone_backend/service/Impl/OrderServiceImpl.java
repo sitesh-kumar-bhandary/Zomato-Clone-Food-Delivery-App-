@@ -1,12 +1,16 @@
 package com.siteshkumar.zomato_clone_backend.service.Impl;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import com.siteshkumar.zomato_clone_backend.dto.order.OrderResponseDto;
 import com.siteshkumar.zomato_clone_backend.dto.order.PlaceOrderRequestDto;
 import com.siteshkumar.zomato_clone_backend.dto.order.UpdateOrderStatusRequestDto;
@@ -27,6 +31,7 @@ import com.siteshkumar.zomato_clone_backend.repository.CartRepository;
 import com.siteshkumar.zomato_clone_backend.repository.OrderRepository;
 import com.siteshkumar.zomato_clone_backend.service.InventoryService;
 import com.siteshkumar.zomato_clone_backend.service.OrderService;
+import com.siteshkumar.zomato_clone_backend.service.redis.RedisLockService;
 import com.siteshkumar.zomato_clone_backend.utils.AuthUtils;
 import com.siteshkumar.zomato_clone_backend.utils.CartUtils;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +43,7 @@ public class OrderServiceImpl implements OrderService {
     private final AuthUtils authUtils;
     private final CartUtils cartUtils;
     private final OrderMapper orderMapper;
+    private final RedisLockService redisLockService;
     private final InventoryService inventoryService;
     private final OrderRepository orderRepository;
     private final CartRepository cartRepository;
@@ -97,10 +103,42 @@ public class OrderServiceImpl implements OrderService {
 
         order.setDeliveryDetails(snapshot);
 
-        for (CartItemEntity item : cart.getCartItems()) {
-            inventoryService.deductStock(
-                    item.getMenuItem().getId(),
-                    item.getQuantity());
+        List<CartItemEntity> items = cart.getCartItems()
+                .stream()
+                .sorted(Comparator.comparing(i -> i.getMenuItem().getId()))
+                .toList();
+
+        List<String> lockKeys = new ArrayList<>();
+        Map<String, String> lockValues = new HashMap<>();
+
+        try {
+
+            for (CartItemEntity item : items) {
+
+                Long menuItemId = item.getMenuItem().getId();
+                String lockKey = "lock:menu:" + menuItemId;
+
+                String lockValue = redisLockService.acquireLock(lockKey, 10000);
+
+                if (lockValue == null) {
+                    throw new IllegalStateException("Menu item is currently being ordered. Please try again.");
+                }
+
+                lockKeys.add(lockKey);
+                lockValues.put(lockKey, lockValue);
+            }
+
+            for (CartItemEntity item : items) {
+                inventoryService.deductStock(
+                        item.getMenuItem().getId(),
+                        item.getQuantity());
+            }
+
+        } finally {
+
+            for (String key : lockKeys) {
+                redisLockService.releaseLock(key, lockValues.get(key));
+            }
         }
 
         // Converting cart item --> order item
