@@ -1,8 +1,6 @@
 package com.siteshkumar.zomato_clone_backend.entity;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import org.hibernate.annotations.CreationTimestamp;
 import com.siteshkumar.zomato_clone_backend.enums.PaymentStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -16,6 +14,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -54,7 +53,7 @@ public class PaymentEntity extends AuditableEntity{
     @JoinColumn(name="order_id", nullable = false, unique = true)
     private OrderEntity order;
 
-    @CreationTimestamp
-    @Column(name="created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    @Version
+    @Column(nullable = false)
+    private Long version;
 }

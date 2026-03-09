@@ -15,6 +15,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -51,4 +52,8 @@ public class CartEntity {
 
     @Column(nullable = false)
     private Integer totalItems = 0;
+
+    @Version
+    @Column(nullable = false)
+    private Long version;
 }

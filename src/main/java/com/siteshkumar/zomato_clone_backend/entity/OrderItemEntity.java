@@ -46,4 +46,5 @@ public class OrderItemEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="menu_item_id", nullable = false)
     private MenuItemEntity menuItem;
+
 }

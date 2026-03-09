@@ -9,6 +9,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import lombok.Getter;
@@ -43,4 +44,8 @@ public class PromoCodeEntity extends AuditableEntity{
     private boolean active = true;
 
     private LocalDate expiryDate;
+
+    @Version
+    @Column(nullable = false)
+    private Long version;
 }

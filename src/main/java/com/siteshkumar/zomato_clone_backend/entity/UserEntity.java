@@ -14,6 +14,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -60,4 +61,8 @@ public class UserEntity extends AuditableEntity{
 
     @OneToMany(mappedBy = "owner")
     private List<RestaurantEntity> restaurants;
+
+    @Version
+    @Column(nullable = false)
+    private Long version;
 }

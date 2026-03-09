@@ -2,7 +2,6 @@ package com.siteshkumar.zomato_clone_backend.service.Impl;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import com.siteshkumar.zomato_clone_backend.entity.MenuItemEntity;
 import com.siteshkumar.zomato_clone_backend.exception.ResourceNotFoundException;
 import com.siteshkumar.zomato_clone_backend.repository.MenuItemRepository;
@@ -31,7 +30,7 @@ public class InventoryServiceImpl implements InventoryService {
     public void deductStock(Long menuItemId, Integer quantity) {
 
         MenuItemEntity item = menuItemRepository
-                .findWithLockById(menuItemId)
+                .findById(menuItemId)
                 .orElseThrow(() -> new ResourceNotFoundException("Menu item not found"));
 
         if(!item.isAvailable()){

@@ -11,6 +11,7 @@ import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import jakarta.validation.constraints.Min;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -49,6 +50,10 @@ public class CartItemEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="menu_item_id", nullable =  false)
     private MenuItemEntity menuItem;
+
+    @Version
+    @Column(nullable = false)
+    private Long version;
 
     public void updateQuantity(int quantity){
         if(quantity < 1)
