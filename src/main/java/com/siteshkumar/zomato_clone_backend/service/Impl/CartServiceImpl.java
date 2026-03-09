@@ -5,6 +5,8 @@ import java.util.HashSet;
 import java.util.Optional;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.siteshkumar.zomato_clone_backend.dto.cart.AddCartItemRequestDto;
 import com.siteshkumar.zomato_clone_backend.dto.cart.CartSummaryResponseDto;
 import com.siteshkumar.zomato_clone_backend.dto.cart.UpdateCartItemRequestDto;
@@ -34,6 +36,7 @@ public class CartServiceImpl implements CartService {
     private final CartMapper cartMapper;
 
     @Override
+    @Transactional
     public CartSummaryResponseDto addItem(AddCartItemRequestDto request) {
         MenuItemEntity menuItem = menuItemRepository.findById(request.getMenuItemId())
                                 .orElseThrow(() -> new ResourceNotFoundException("Menu item not found"));
@@ -84,6 +87,7 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
+    @Transactional
     public CartSummaryResponseDto updateItem(Long cartItemId, UpdateCartItemRequestDto request) {
         UserEntity user = authUtils.getCurrentLoggedInUser().getUser();
 
@@ -108,6 +112,7 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
+    @Transactional
     public CartSummaryResponseDto deleteItem(Long cartItemId) {
         UserEntity user = authUtils.getCurrentLoggedInUser().getUser();
 
@@ -132,6 +137,7 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public CartSummaryResponseDto cartSummary() {
         UserEntity user = authUtils.getCurrentLoggedInUser().getUser();
 

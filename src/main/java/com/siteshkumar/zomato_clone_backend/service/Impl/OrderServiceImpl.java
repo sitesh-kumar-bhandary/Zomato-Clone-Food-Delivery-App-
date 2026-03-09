@@ -5,6 +5,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.siteshkumar.zomato_clone_backend.dto.order.OrderResponseDto;
 import com.siteshkumar.zomato_clone_backend.dto.order.PlaceOrderRequestDto;
 import com.siteshkumar.zomato_clone_backend.dto.order.UpdateOrderStatusRequestDto;
@@ -42,6 +44,7 @@ public class OrderServiceImpl implements OrderService {
     private final AddressRepository addressRepository;
 
     @Override
+    @Transactional
     public OrderResponseDto placeOrder(PlaceOrderRequestDto request) {
         UserEntity user = authUtils.getCurrentLoggedInUser().getUser();
 
@@ -123,6 +126,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<OrderResponseDto> getMyOrders(Pageable pageable) {
         UserEntity user = authUtils.getCurrentLoggedInUser().getUser();
 
@@ -132,6 +136,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<OrderResponseDto> getRestaurantOrders(Pageable pageable) {
 
         UserEntity user = authUtils.getCurrentLoggedInUser().getUser();
@@ -146,6 +151,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
     public OrderResponseDto cancelMyOrder(Long orderId) {
         UserEntity user = authUtils.getCurrentLoggedInUser().getUser();
 
@@ -183,6 +189,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
     public OrderResponseDto updateOrderStatus(Long orderId, UpdateOrderStatusRequestDto request) {
         if (request.getStatus() == OrderStatus.CANCELLED)
             throw new IllegalArgumentException("Use cancel api");

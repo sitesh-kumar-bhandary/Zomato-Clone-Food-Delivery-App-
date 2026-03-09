@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.siteshkumar.zomato_clone_backend.dto.SearchResponseDto;
 import com.siteshkumar.zomato_clone_backend.dto.menuItem.MenuItemResponseDto;
@@ -25,6 +26,7 @@ public class SearchServiceImpl implements SearchService {
     private final MenuItemRepository menuItemRepository;
 
     @Override
+    @Transactional(readOnly = true)
     public SearchResponseDto search(String query, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
 

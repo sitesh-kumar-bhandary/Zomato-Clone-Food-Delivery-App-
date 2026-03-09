@@ -5,6 +5,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import com.siteshkumar.zomato_clone_backend.dto.auth.LoginRequestDto;
 import com.siteshkumar.zomato_clone_backend.dto.auth.LoginResponseDto;
 import com.siteshkumar.zomato_clone_backend.dto.auth.SignupRequestDto;
@@ -31,11 +32,13 @@ public class AuthServiceImpl implements AuthService {
     private final AuthUtils authUtils;
 
     @Override
+    @Transactional
     public SignupResponseDto customerSignup(SignupRequestDto request) {
         return createUser(request, Role.CUSTOMER, AccountStatus.APPROVED);
     }
 
     @Override
+    @Transactional
     public SignupResponseDto restaurantSignup(SignupRequestDto request){
         return createUser(request, Role.RESTAURANT, AccountStatus.PENDING);
     }
@@ -68,6 +71,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional
     public LoginResponseDto login(LoginRequestDto request) {
         Authentication auth = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(

@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import com.siteshkumar.zomato_clone_backend.dto.admin.AdminReportSummaryDto;
 import com.siteshkumar.zomato_clone_backend.dto.order.OrderResponseDto;
 import com.siteshkumar.zomato_clone_backend.entity.OrderEntity;
@@ -33,6 +34,7 @@ public class AdminServiceImpl implements AdminService {
     private final OrderMapper orderMapper;
 
     @Override
+    @Transactional(readOnly = true)
     public Page<OrderResponseDto> allOrders(OrderStatus status, Pageable pageable) {
         Page<OrderEntity> orderPage;
 
@@ -48,6 +50,7 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
+    @Transactional
     public void blockUser(Long id) {
         UserEntity user = userRepository
                 .findById(id)
@@ -64,6 +67,7 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
+    @Transactional
     public void unblockUser(Long id) {
         UserEntity user = userRepository
                 .findById(id)
@@ -77,6 +81,7 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
+    @Transactional
     public void blockRestaurant(Long id) {
         RestaurantEntity restaurant = restaurantRepository
                 .findById(id)
@@ -90,6 +95,7 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
+    @Transactional
     public void unblockRestaurant(Long id) {
         RestaurantEntity restaurant = restaurantRepository
                 .findById(id)

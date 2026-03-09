@@ -6,6 +6,8 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.siteshkumar.zomato_clone_backend.dto.menuItem.CreateMenuItemRequestDto;
 import com.siteshkumar.zomato_clone_backend.dto.menuItem.CreateMenuItemResponseDto;
 import com.siteshkumar.zomato_clone_backend.dto.menuItem.MenuItemResponseDto;
@@ -33,6 +35,7 @@ public class MenuItemServiceImpl implements MenuItemService {
     private final MenuItemMapper menuItemMapper;
 
     @Override
+    @Transactional
     public CreateMenuItemResponseDto createMenuItem(Long restaurantId, CreateMenuItemRequestDto request) {
         RestaurantEntity restaurant = restaurantRepository.findById(restaurantId)
                                     .orElseThrow(() -> new ResourceNotFoundException("Restaurant with id " + restaurantId + " not found"));
@@ -53,6 +56,7 @@ public class MenuItemServiceImpl implements MenuItemService {
     }
 
     @Override
+    @Transactional
     public UpdateMenuItemResponseDto updateMenuItem(Long restaurantId, Long menuItemId, UpdateMenuItemRequestDto request) {
 
             MenuItemEntity menuItem = menuItemRepository.findByIdAndRestaurantId(menuItemId, restaurantId)
@@ -75,6 +79,7 @@ public class MenuItemServiceImpl implements MenuItemService {
     }
 
     @Override
+    @Transactional
     public void deleteMenuItem(Long restaurantId, Long menuItemId) {
         MenuItemEntity menuItem = menuItemRepository.findByIdAndRestaurantId(menuItemId, restaurantId)
                                 .orElseThrow(() -> new ResourceNotFoundException("Menu item with id " + menuItemId + " not found in the restaurant id "+restaurantId));
@@ -90,6 +95,7 @@ public class MenuItemServiceImpl implements MenuItemService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public MenuItemResponseDto getMenuItemById(Long restaurantId, Long menuItemId) {
         MenuItemEntity menuItem = menuItemRepository.findByIdAndRestaurantId(menuItemId, restaurantId)
                                 .orElseThrow(() -> new ResourceNotFoundException("Menu item with id " + menuItemId + " not found in the restaurant id "+restaurantId));
@@ -101,6 +107,7 @@ public class MenuItemServiceImpl implements MenuItemService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<MenuItemResponseDto> getAllMenuItems(Long restaurantId, Pageable pageable) {
         RestaurantEntity restaurant = restaurantRepository.findById(restaurantId)
                                     .orElseThrow(() -> new ResourceNotFoundException("Restaurant with id " + restaurantId + " not found"));
