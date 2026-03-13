@@ -1,6 +1,7 @@
 package com.siteshkumar.zomato_clone_backend.entity;
 
 import java.math.BigDecimal;
+import java.util.HashSet;
 import java.util.Set;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -41,7 +42,7 @@ public class CartEntity {
     private UserEntity user;
 
     @OneToMany(mappedBy = "cart", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<CartItemEntity> cartItems;
+    private Set<CartItemEntity> cartItems = new HashSet<>();
 
     @ManyToOne
     @JoinColumn(name="restaurant_id")

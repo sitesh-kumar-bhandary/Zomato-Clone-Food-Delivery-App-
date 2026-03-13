@@ -12,9 +12,17 @@ spring:
     show-sql: true
     hibernate:
       ddl-auto: update
+
+    defer-datasource-initialization: true
+    
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
+
+  sql:
+    init:
+      mode: always
+      data-locations: ${DATA_PATH}
 
   #Redis-locking configuration
   data:
