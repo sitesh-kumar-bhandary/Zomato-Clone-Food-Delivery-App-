@@ -1,11 +1,11 @@
 package com.siteshkumar.zomato_clone_backend.service.Impl;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import com.siteshkumar.zomato_clone_backend.dto.restaurant.CreateRestaurantRequestDto;
 import com.siteshkumar.zomato_clone_backend.dto.restaurant.CreateRestaurantResponseDto;
 import com.siteshkumar.zomato_clone_backend.dto.restaurant.RestaurantResponseDto;
@@ -103,7 +103,11 @@ public class RestaurantServiceImpl implements RestaurantService{
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "restaurants", key="#id")
     public RestaurantResponseDto getRestaurantById(Long id) {
+
+        System.out.println("Fetching restaurant from DATABASE...");
+        
         RestaurantEntity restaurant = restaurantRepository.findByIdAndBlockedFalse(id)
                                     .orElseThrow(() -> new ResourceNotFoundException("Restaurant with id " + id + " not found"));
 
