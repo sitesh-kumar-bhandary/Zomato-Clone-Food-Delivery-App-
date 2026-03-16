@@ -39,7 +39,7 @@ public class SecurityConfig {
 
                 // Only Admin api's
 
-                .anyRequest().authenticated()
+                .anyRequest().permitAll()
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 

@@ -13,5 +13,6 @@ public interface MenuItemService {
     UpdateMenuItemResponseDto updateMenuItem(Long restaurantId, Long menuItemId, UpdateMenuItemRequestDto request);
     void deleteMenuItem(Long restaurantId, Long menuItemId);
     MenuItemResponseDto getMenuItemById(Long restaurantId, Long menuItemId);
-    Page<MenuItemResponseDto> getAllMenuItems(Long restaurantId, Pageable pageable);
+    Page<MenuItemResponseDto> getPublicMenuItems(Long restaurantId, Pageable pageable);
+    Page<MenuItemResponseDto> getOwnerMenuItems(Long restaurantId, Pageable pageable);
 }

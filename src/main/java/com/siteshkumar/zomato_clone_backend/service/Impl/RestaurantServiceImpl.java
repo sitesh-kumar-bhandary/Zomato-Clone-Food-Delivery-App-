@@ -1,5 +1,6 @@
 package com.siteshkumar.zomato_clone_backend.service.Impl;
 
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -57,6 +58,7 @@ public class RestaurantServiceImpl implements RestaurantService{
 
     @Override
     @Transactional
+    @CacheEvict(value = "restaurant", key="#id")
     public UpdateRestaurantResponseDto updateRestaurant(Long id, UpdateRestaurantRequestDto request) {
         RestaurantEntity restaurant = restaurantRepository.findById(id)
                                     .orElseThrow(() -> new ResourceNotFoundException("Restaurant with id " + id + " not found"));
@@ -77,6 +79,7 @@ public class RestaurantServiceImpl implements RestaurantService{
 
     @Override
     @Transactional
+    @CacheEvict(value = "restaurant", key="#id")
     public void deleteRestaurant(Long id) {
         RestaurantEntity restaurant = restaurantRepository.findById(id)
                                     .orElseThrow(() -> new ResourceNotFoundException("Restaurant with id " + id + " not found"));
@@ -91,7 +94,7 @@ public class RestaurantServiceImpl implements RestaurantService{
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public Page<RestaurantResponseDto> getAllRestaurants(String city, Pageable pageable) {
         if(city == null || city.trim().isEmpty())
             return Page.empty(pageable);
@@ -103,7 +106,7 @@ public class RestaurantServiceImpl implements RestaurantService{
 
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = "restaurants", key="#id")
+    @Cacheable(value = "restaurant", key="#id")
     public RestaurantResponseDto getRestaurantById(Long id) {
 
         System.out.println("Fetching restaurant from DATABASE...");
