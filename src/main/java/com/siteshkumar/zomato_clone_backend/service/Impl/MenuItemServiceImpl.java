@@ -21,6 +21,7 @@ import com.siteshkumar.zomato_clone_backend.mapper.MenuItemMapper;
 import com.siteshkumar.zomato_clone_backend.repository.MenuItemRepository;
 import com.siteshkumar.zomato_clone_backend.repository.RestaurantRepository;
 import com.siteshkumar.zomato_clone_backend.service.MenuItemService;
+import com.siteshkumar.zomato_clone_backend.service.MetricsService;
 import com.siteshkumar.zomato_clone_backend.utils.AuthUtils;
 
 import lombok.RequiredArgsConstructor;
@@ -32,6 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 public class MenuItemServiceImpl implements MenuItemService {
 
     private final AuthUtils authUtils;
+    private final MetricsService metricsService;
     private final RestaurantRepository restaurantRepository;
     private final MenuItemRepository menuItemRepository;
     private final MenuItemMapper menuItemMapper;
@@ -140,11 +142,14 @@ public class MenuItemServiceImpl implements MenuItemService {
 
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = "menuItem", key="#menuItemId")
+    @Cacheable(value = "menuItem", key = "#restaurantId + '_' + #menuItemId")
     public MenuItemResponseDto getMenuItemById(Long restaurantId, Long menuItemId) {
+        log.info("ENTERED getMenuItemById METHOD");
 
         log.info("Fetching menu item (possibly from cache). RestaurantId: {}, MenuItemId: {}", 
                     restaurantId, menuItemId);
+
+        metricsService.incrementDbHits();
 
         MenuItemEntity menuItem = menuItemRepository.findByIdAndRestaurantId(menuItemId, restaurantId)
                 .orElseThrow(() -> {
@@ -214,4 +219,5 @@ public class MenuItemServiceImpl implements MenuItemService {
 
         return menuItems.map(menuItemMapper::toResponseDto);
     }
+
 }

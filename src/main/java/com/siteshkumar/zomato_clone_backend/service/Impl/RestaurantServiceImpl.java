@@ -22,6 +22,7 @@ import com.siteshkumar.zomato_clone_backend.exception.ResourceNotFoundException;
 import com.siteshkumar.zomato_clone_backend.mapper.RestaurantMapper;
 import com.siteshkumar.zomato_clone_backend.repository.RestaurantRepository;
 import com.siteshkumar.zomato_clone_backend.security.CustomUserDetails;
+import com.siteshkumar.zomato_clone_backend.service.MetricsService;
 import com.siteshkumar.zomato_clone_backend.service.RestaurantService;
 import com.siteshkumar.zomato_clone_backend.utils.AuthUtils;
 
@@ -34,6 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 public class RestaurantServiceImpl implements RestaurantService{
 
     private final AuthUtils authUtils;
+    private final MetricsService metricsService;
     private final RestaurantMapper restaurantMapper;
     private final RestaurantRepository restaurantRepository;
 
@@ -154,6 +156,8 @@ public class RestaurantServiceImpl implements RestaurantService{
 
         log.info("Fetching restaurant (possibly from cache). RestaurantId: {}", id);
 
+        metricsService.incrementDbHits();
+
         RestaurantEntity restaurant = restaurantRepository.findByIdAndBlockedFalse(id)
                                     .orElseThrow(() -> {
                                         log.error("Restaurant not found. RestaurantId: {}", id);
@@ -164,4 +168,5 @@ public class RestaurantServiceImpl implements RestaurantService{
 
         return restaurantMapper.toResponseDto(restaurant);
     }
+    
 }
