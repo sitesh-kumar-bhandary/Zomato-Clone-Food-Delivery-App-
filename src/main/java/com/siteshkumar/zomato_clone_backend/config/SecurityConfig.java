@@ -12,26 +12,47 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
 import com.siteshkumar.zomato_clone_backend.filter.JwtAuthFilter;
+
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Configuration
 @EnableMethodSecurity
 @RequiredArgsConstructor
+@Slf4j
 public class SecurityConfig {
     
     private final JwtAuthFilter jwtAuthFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain (HttpSecurity http) throws Exception {
+
+        log.info("Initializing Security Filter Chain...");
+
         http
-            .csrf( csrf -> csrf.disable())
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
+            .csrf( csrf -> {
+                log.info("Disabling CSRF protection");
+                csrf.disable();
+            })
+            .sessionManagement(session -> {
+                log.info("Setting session management to STATELESS");
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+            })
+            .authorizeHttpRequests(auth -> {
+
+                log.info("Configuring public endpoints and authorization rules");
+
                 // public api's
-                .requestMatchers("/auth/**").permitAll()
-                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                .requestMatchers(HttpMethod.GET, "/restaurants/**").permitAll()
+                log.info("Permitting all requests to /auth/**");
+                auth.requestMatchers("/auth/**").permitAll();
+
+                log.info("Permitting Swagger/OpenAPI endpoints");
+                auth.requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll();
+
+                log.info("Permitting GET requests to /restaurants/**");
+                auth.requestMatchers(HttpMethod.GET, "/restaurants/**").permitAll();
 
                 // Only Restaurant's Api's
 
@@ -39,20 +60,25 @@ public class SecurityConfig {
 
                 // Only Admin api's
 
-                .anyRequest().permitAll()
-            )
+                log.warn("Currently permitting all other requests (not secure for production)");
+                auth.anyRequest().permitAll();
+            })
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+
+        log.info("JWT Authentication filter added before UsernamePasswordAuthenticationFilter");
 
         return http.build();
     }
 
     @Bean
     public PasswordEncoder passwordEncoder(){
+        log.info("Initializing BCryptPasswordEncoder");
         return new BCryptPasswordEncoder();
     }
 
     @Bean
     public AuthenticationManager authManager(AuthenticationConfiguration authConfig) throws Exception {
+        log.info("Initializing AuthenticationManager");
         return authConfig.getAuthenticationManager();
     }
 }

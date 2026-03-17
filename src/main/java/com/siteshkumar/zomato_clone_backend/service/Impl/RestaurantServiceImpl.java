@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import com.siteshkumar.zomato_clone_backend.dto.restaurant.CreateRestaurantRequestDto;
 import com.siteshkumar.zomato_clone_backend.dto.restaurant.CreateRestaurantResponseDto;
 import com.siteshkumar.zomato_clone_backend.dto.restaurant.RestaurantResponseDto;
@@ -23,11 +24,13 @@ import com.siteshkumar.zomato_clone_backend.repository.RestaurantRepository;
 import com.siteshkumar.zomato_clone_backend.security.CustomUserDetails;
 import com.siteshkumar.zomato_clone_backend.service.RestaurantService;
 import com.siteshkumar.zomato_clone_backend.utils.AuthUtils;
-import lombok.RequiredArgsConstructor;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class RestaurantServiceImpl implements RestaurantService{
 
     private final AuthUtils authUtils;
@@ -37,22 +40,30 @@ public class RestaurantServiceImpl implements RestaurantService{
     @Override
     @Transactional
     public CreateRestaurantResponseDto createRestaurant(CreateRestaurantRequestDto request) {
+
         CustomUserDetails user = authUtils.getCurrentLoggedInUser();
+        log.info("Create restaurant request by userId: {}", user.getUser().getId());
 
-        if(user.getUser().getRole() != Role.RESTAURANT)
+        if(user.getUser().getRole() != Role.RESTAURANT) {
+            log.warn("Unauthorized restaurant creation attempt. UserId: {}", user.getUser().getId());
             throw new AccessDeniedException("Only restaurant owners can create restaurant");
+        }
 
-        if(user.getUser().getStatus() != AccountStatus.APPROVED)
+        if(user.getUser().getStatus() != AccountStatus.APPROVED) {
+            log.warn("Unapproved account tried to create restaurant. UserId: {}", user.getUser().getId());
             throw new AccountNotApprovedException("Account not approved yet");
+        }
 
         RestaurantEntity restaurant = new RestaurantEntity();
         restaurant.setName(request.getName());
         restaurant.setCity(request.getCity());
-
         restaurant.setActive(false);
         restaurant.setOwner(user.getUser());
 
         RestaurantEntity savedRestaurant = restaurantRepository.save(restaurant);
+
+        log.info("Restaurant created successfully. RestaurantId: {}", savedRestaurant.getId());
+
         return restaurantMapper.toCreateResponseDto(savedRestaurant);
     }
 
@@ -60,20 +71,33 @@ public class RestaurantServiceImpl implements RestaurantService{
     @Transactional
     @CacheEvict(value = "restaurant", key="#id")
     public UpdateRestaurantResponseDto updateRestaurant(Long id, UpdateRestaurantRequestDto request) {
+
+        log.info("Updating restaurant. RestaurantId: {}", id);
+
         RestaurantEntity restaurant = restaurantRepository.findById(id)
-                                    .orElseThrow(() -> new ResourceNotFoundException("Restaurant with id " + id + " not found"));
+                                    .orElseThrow(() -> {
+                                        log.error("Restaurant not found. RestaurantId: {}", id);
+                                        return new ResourceNotFoundException("Restaurant with id " + id + " not found");
+                                    });
 
         CustomUserDetails user = authUtils.getCurrentLoggedInUser();
         UserEntity currentUser = user.getUser();
 
-        if(currentUser.getRole() != Role.ADMIN && ! restaurant.getOwner().getId().equals(currentUser.getId()))
+        if(currentUser.getRole() != Role.ADMIN && ! restaurant.getOwner().getId().equals(currentUser.getId())) {
+            log.warn("Unauthorized restaurant update attempt. UserId: {}, RestaurantId: {}", 
+                        currentUser.getId(), id);
             throw new AccessDeniedException("You cannot update this restaurant");
+        }
 
-
-        if(request.getName() != null && ! request.getName().equals(restaurant.getName()))
+        if(request.getName() != null && ! request.getName().equals(restaurant.getName())) {
+            log.debug("Updating restaurant name. RestaurantId: {}", id);
             restaurant.setName(request.getName());
+        }
 
         RestaurantEntity updatedRestaurant = restaurantRepository.save(restaurant);
+
+        log.info("Restaurant updated successfully. RestaurantId: {}", id);
+
         return restaurantMapper.toUpdateResponseDto(updatedRestaurant);
     }
 
@@ -81,25 +105,44 @@ public class RestaurantServiceImpl implements RestaurantService{
     @Transactional
     @CacheEvict(value = "restaurant", key="#id")
     public void deleteRestaurant(Long id) {
+
+        log.info("Deleting restaurant (soft delete). RestaurantId: {}", id);
+
         RestaurantEntity restaurant = restaurantRepository.findById(id)
-                                    .orElseThrow(() -> new ResourceNotFoundException("Restaurant with id " + id + " not found"));
+                                    .orElseThrow(() -> {
+                                        log.error("Restaurant not found for deletion. RestaurantId: {}", id);
+                                        return new ResourceNotFoundException("Restaurant with id " + id + " not found");
+                                    });
 
         UserEntity user = authUtils.getCurrentLoggedInUser().getUser();
-        if(user.getRole() != Role.ADMIN)
-            throw new AccessDeniedException("You are not allowed to delete this restaurant");
 
-        // Implementing soft delete
+        if(user.getRole() != Role.ADMIN) {
+            log.warn("Unauthorized restaurant delete attempt. UserId: {}, RestaurantId: {}", 
+                        user.getId(), id);
+            throw new AccessDeniedException("You are not allowed to delete this restaurant");
+        }
+
         restaurant.setActive(false);
         restaurantRepository.save(restaurant);
+
+        log.info("Restaurant soft deleted successfully. RestaurantId: {}", id);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<RestaurantResponseDto> getAllRestaurants(String city, Pageable pageable) {
-        if(city == null || city.trim().isEmpty())
-            return Page.empty(pageable);
 
-        Page<RestaurantEntity> restaurantPages = restaurantRepository.findByCityIgnoreCaseAndActiveTrueAndBlockedFalse(city, pageable);
+        log.info("Fetching restaurants by city: {}", city);
+
+        if(city == null || city.trim().isEmpty()) {
+            log.warn("Empty city provided for restaurant search");
+            return Page.empty(pageable);
+        }
+
+        Page<RestaurantEntity> restaurantPages = restaurantRepository
+                .findByCityIgnoreCaseAndActiveTrueAndBlockedFalse(city, pageable);
+
+        log.info("Restaurants fetched. Count: {}", restaurantPages.getTotalElements());
 
         return restaurantPages.map(restaurantMapper::toResponseDto);
     }
@@ -109,10 +152,15 @@ public class RestaurantServiceImpl implements RestaurantService{
     @Cacheable(value = "restaurant", key="#id")
     public RestaurantResponseDto getRestaurantById(Long id) {
 
-        System.out.println("Fetching restaurant from DATABASE...");
-        
+        log.info("Fetching restaurant (possibly from cache). RestaurantId: {}", id);
+
         RestaurantEntity restaurant = restaurantRepository.findByIdAndBlockedFalse(id)
-                                    .orElseThrow(() -> new ResourceNotFoundException("Restaurant with id " + id + " not found"));
+                                    .orElseThrow(() -> {
+                                        log.error("Restaurant not found. RestaurantId: {}", id);
+                                        return new ResourceNotFoundException("Restaurant with id " + id + " not found");
+                                    });
+
+        log.info("Restaurant fetched successfully. RestaurantId: {}", id);
 
         return restaurantMapper.toResponseDto(restaurant);
     }

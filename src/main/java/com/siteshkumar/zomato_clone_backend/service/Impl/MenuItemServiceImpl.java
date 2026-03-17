@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import com.siteshkumar.zomato_clone_backend.dto.menuItem.CreateMenuItemRequestDto;
 import com.siteshkumar.zomato_clone_backend.dto.menuItem.CreateMenuItemResponseDto;
 import com.siteshkumar.zomato_clone_backend.dto.menuItem.MenuItemResponseDto;
@@ -21,10 +22,13 @@ import com.siteshkumar.zomato_clone_backend.repository.MenuItemRepository;
 import com.siteshkumar.zomato_clone_backend.repository.RestaurantRepository;
 import com.siteshkumar.zomato_clone_backend.service.MenuItemService;
 import com.siteshkumar.zomato_clone_backend.utils.AuthUtils;
+
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class MenuItemServiceImpl implements MenuItemService {
 
     private final AuthUtils authUtils;
@@ -35,12 +39,22 @@ public class MenuItemServiceImpl implements MenuItemService {
     @Override
     @Transactional
     public CreateMenuItemResponseDto createMenuItem(Long restaurantId, CreateMenuItemRequestDto request) {
+
+        log.info("Creating menu item. RestaurantId: {}, Name: {}", restaurantId, request.getName());
+
         RestaurantEntity restaurant = restaurantRepository.findById(restaurantId)
-                .orElseThrow(() -> new ResourceNotFoundException("Restaurant with id " + restaurantId + " not found"));
+                .orElseThrow(() -> {
+                    log.error("Restaurant not found with id: {}", restaurantId);
+                    return new ResourceNotFoundException("Restaurant with id " + restaurantId + " not found");
+                });
 
         UserEntity currentUser = authUtils.getCurrentLoggedInUser().getUser();
-        if (!restaurant.getOwner().getId().equals(currentUser.getId()))
+
+        if (!restaurant.getOwner().getId().equals(currentUser.getId())) {
+            log.warn("Unauthorized menu item creation attempt. UserId: {}, RestaurantId: {}", 
+                        currentUser.getId(), restaurantId);
             throw new AccessDeniedException("You are not allowed to create menu items in this restaurant");
+        }
 
         MenuItemEntity menuItem = new MenuItemEntity();
         menuItem.setName(request.getName());
@@ -49,6 +63,8 @@ public class MenuItemServiceImpl implements MenuItemService {
         menuItem.setAvailable(true);
 
         MenuItemEntity savedMenuItem = menuItemRepository.save(menuItem);
+
+        log.info("Menu item created successfully. MenuItemId: {}", savedMenuItem.getId());
 
         return menuItemMapper.toCreateResponseDto(savedMenuItem);
     }
@@ -59,22 +75,36 @@ public class MenuItemServiceImpl implements MenuItemService {
     public UpdateMenuItemResponseDto updateMenuItem(Long restaurantId, Long menuItemId,
             UpdateMenuItemRequestDto request) {
 
+        log.info("Updating menu item. RestaurantId: {}, MenuItemId: {}", restaurantId, menuItemId);
+
         MenuItemEntity menuItem = menuItemRepository.findByIdAndRestaurantId(menuItemId, restaurantId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Menu item with id " + menuItemId + " not found in the restaurant id " + restaurantId));
+                .orElseThrow(() -> {
+                    log.error("Menu item not found. MenuItemId: {}, RestaurantId: {}", menuItemId, restaurantId);
+                    return new ResourceNotFoundException(
+                        "Menu item with id " + menuItemId + " not found in the restaurant id " + restaurantId);
+                });
 
         UserEntity currentUser = authUtils.getCurrentLoggedInUser().getUser();
 
-        if (!menuItem.getRestaurant().getOwner().getId().equals(currentUser.getId()))
+        if (!menuItem.getRestaurant().getOwner().getId().equals(currentUser.getId())) {
+            log.warn("Unauthorized menu item update attempt. UserId: {}, MenuItemId: {}", 
+                        currentUser.getId(), menuItemId);
             throw new AccessDeniedException("You are not allowed to update this menu item");
+        }
 
-        if (request.getName() != null && !request.getName().isBlank())
+        if (request.getName() != null && !request.getName().isBlank()) {
+            log.debug("Updating name for MenuItemId: {}", menuItemId);
             menuItem.setName(request.getName());
+        }
 
-        if (request.getPrice() != null && !request.getPrice().equals(menuItem.getPrice()))
+        if (request.getPrice() != null && !request.getPrice().equals(menuItem.getPrice())) {
+            log.debug("Updating price for MenuItemId: {}", menuItemId);
             menuItem.setPrice(request.getPrice());
+        }
 
         MenuItemEntity savedMenuItem = menuItemRepository.save(menuItem);
+
+        log.info("Menu item updated successfully. MenuItemId: {}", menuItemId);
 
         return menuItemMapper.toUpdateResponeDto(savedMenuItem);
     }
@@ -83,30 +113,52 @@ public class MenuItemServiceImpl implements MenuItemService {
     @Transactional
     @CacheEvict(value = "menuItem", key="#menuItemId")
     public void deleteMenuItem(Long restaurantId, Long menuItemId) {
+
+        log.info("Deleting menu item (soft delete). RestaurantId: {}, MenuItemId: {}", restaurantId, menuItemId);
+
         MenuItemEntity menuItem = menuItemRepository.findByIdAndRestaurantId(menuItemId, restaurantId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Menu item with id " + menuItemId + " not found in the restaurant id " + restaurantId));
+                .orElseThrow(() -> {
+                    log.error("Menu item not found for deletion. MenuItemId: {}, RestaurantId: {}", 
+                                menuItemId, restaurantId);
+                    return new ResourceNotFoundException(
+                        "Menu item with id " + menuItemId + " not found in the restaurant id " + restaurantId);
+                });
 
         UserEntity currentUser = authUtils.getCurrentLoggedInUser().getUser();
 
-        if (!currentUser.getId().equals(menuItem.getRestaurant().getOwner().getId()))
+        if (!currentUser.getId().equals(menuItem.getRestaurant().getOwner().getId())) {
+            log.warn("Unauthorized menu item delete attempt. UserId: {}, MenuItemId: {}", 
+                        currentUser.getId(), menuItemId);
             throw new AccessDeniedException("You are not allowed to delete this menu item");
+        }
 
-        // Implementing soft delete
         menuItem.setAvailable(false);
         menuItemRepository.save(menuItem);
+
+        log.info("Menu item soft deleted successfully. MenuItemId: {}", menuItemId);
     }
 
     @Override
     @Transactional(readOnly = true)
     @Cacheable(value = "menuItem", key="#menuItemId")
     public MenuItemResponseDto getMenuItemById(Long restaurantId, Long menuItemId) {
-        MenuItemEntity menuItem = menuItemRepository.findByIdAndRestaurantId(menuItemId, restaurantId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Menu item with id " + menuItemId + " not found in the restaurant id " + restaurantId));
 
-        if (!menuItem.isAvailable() || !menuItem.getRestaurant().isActive())
+        log.info("Fetching menu item (possibly from cache). RestaurantId: {}, MenuItemId: {}", 
+                    restaurantId, menuItemId);
+
+        MenuItemEntity menuItem = menuItemRepository.findByIdAndRestaurantId(menuItemId, restaurantId)
+                .orElseThrow(() -> {
+                    log.error("Menu item not found. MenuItemId: {}, RestaurantId: {}", menuItemId, restaurantId);
+                    return new ResourceNotFoundException(
+                        "Menu item with id " + menuItemId + " not found in the restaurant id " + restaurantId);
+                });
+
+        if (!menuItem.isAvailable() || !menuItem.getRestaurant().isActive()) {
+            log.warn("Menu item not available or restaurant inactive. MenuItemId: {}", menuItemId);
             throw new ResourceNotFoundException("Menu item not available");
+        }
+
+        log.info("Menu item fetched successfully. MenuItemId: {}", menuItemId);
 
         return menuItemMapper.toResponseDto(menuItem);
     }
@@ -114,13 +166,24 @@ public class MenuItemServiceImpl implements MenuItemService {
     @Override
     @Transactional(readOnly = true)
     public Page<MenuItemResponseDto> getPublicMenuItems(Long restaurantId, Pageable pageable) {
+
+        log.info("Fetching public menu items. RestaurantId: {}, Page: {}", restaurantId, pageable);
+
         RestaurantEntity restaurant = restaurantRepository.findById(restaurantId)
-                .orElseThrow(() -> new ResourceNotFoundException("Restaurant with id " + restaurantId + " not found"));
+                .orElseThrow(() -> {
+                    log.error("Restaurant not found. RestaurantId: {}", restaurantId);
+                    return new ResourceNotFoundException("Restaurant with id " + restaurantId + " not found");
+                });
 
-        if (!restaurant.isActive())
+        if (!restaurant.isActive()) {
+            log.warn("Restaurant not active. RestaurantId: {}", restaurantId);
             throw new ResourceNotFoundException("Restaurant not available");
+        }
 
-        Page<MenuItemEntity> menuItems = menuItemRepository.findByRestaurantIdAndAvailableTrue(restaurantId, pageable);
+        Page<MenuItemEntity> menuItems = menuItemRepository
+                .findByRestaurantIdAndAvailableTrue(restaurantId, pageable);
+
+        log.info("Public menu items fetched successfully. Count: {}", menuItems.getTotalElements());
 
         return menuItems.map(menuItemMapper::toResponseDto);
     }
@@ -128,15 +191,26 @@ public class MenuItemServiceImpl implements MenuItemService {
     @Override
     @Transactional(readOnly = true)
     public Page<MenuItemResponseDto> getOwnerMenuItems(Long restaurantId, Pageable pageable) {
+
+        log.info("Fetching owner menu items. RestaurantId: {}, Page: {}", restaurantId, pageable);
+
         RestaurantEntity restaurant = restaurantRepository.findById(restaurantId)
-            .orElseThrow(() -> new ResourceNotFoundException("Restaurant with id " + restaurantId + " not found"));
+            .orElseThrow(() -> {
+                log.error("Restaurant not found. RestaurantId: {}", restaurantId);
+                return new ResourceNotFoundException("Restaurant with id " + restaurantId + " not found");
+            });
 
         UserEntity currentUser = authUtils.getCurrentLoggedInUser().getUser();
 
-        if (!restaurant.getOwner().getId().equals(currentUser.getId()))
+        if (!restaurant.getOwner().getId().equals(currentUser.getId())) {
+            log.warn("Unauthorized access to owner menu. UserId: {}, RestaurantId: {}", 
+                        currentUser.getId(), restaurantId);
             throw new AccessDeniedException("You are not allowed to access this menu");
+        }
 
         Page<MenuItemEntity> menuItems = menuItemRepository.findByRestaurantId(restaurantId, pageable);
+
+        log.info("Owner menu items fetched successfully. Count: {}", menuItems.getTotalElements());
 
         return menuItems.map(menuItemMapper::toResponseDto);
     }

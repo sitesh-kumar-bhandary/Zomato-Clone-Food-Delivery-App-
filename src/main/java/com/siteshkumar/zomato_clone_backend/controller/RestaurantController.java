@@ -33,21 +33,21 @@ public class RestaurantController {
     private final RestaurantService restaurantService;
     
     @PostMapping
-    @PreAuthorize("hasAnyRole('RESTAURANT', 'ADMIN')")
+    // @PreAuthorize("hasAnyRole('RESTAURANT', 'ADMIN')")
     public ResponseEntity<CreateRestaurantResponseDto> createRestaurant(@Valid @RequestBody CreateRestaurantRequestDto request){
         CreateRestaurantResponseDto createdRestaurant = restaurantService.createRestaurant(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdRestaurant);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('RESTAURANT', 'ADMIN')")
+    // @PreAuthorize("hasAnyRole('RESTAURANT', 'ADMIN')")
     public ResponseEntity<UpdateRestaurantResponseDto> updateRestaurant(@PathVariable Long id, @Valid @RequestBody UpdateRestaurantRequestDto request){
         UpdateRestaurantResponseDto updatedRestaurant = restaurantService.updateRestaurant(id, request);
         return ResponseEntity.ok(updatedRestaurant);
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    // @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteRestaurant(@PathVariable Long id){
         restaurantService.deleteRestaurant(id);
         return ResponseEntity.noContent().build();
