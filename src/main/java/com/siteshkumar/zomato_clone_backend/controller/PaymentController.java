@@ -7,7 +7,8 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import com.siteshkumar.zomato_clone_backend.dto.PaymentResponseDto;
+import com.siteshkumar.zomato_clone_backend.dto.payment.PaymentIntentResponseDto;
+import com.siteshkumar.zomato_clone_backend.dto.payment.PaymentResponseDto;
 import com.siteshkumar.zomato_clone_backend.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 
@@ -35,5 +36,14 @@ public class PaymentController {
 
         PaymentResponseDto payment = paymentService.retryPayment(orderId, key);
         return ResponseEntity.ok(payment);
+    }
+
+    @PostMapping("/{orderId}/intent")
+    public ResponseEntity<PaymentIntentResponseDto> createPaymentIntent(
+                                    @PathVariable Long orderId, 
+                                    @RequestHeader("Idempotency-Key") String key) throws Exception {
+                                        
+        PaymentIntentResponseDto response = paymentService.createPaymentIntent(orderId, key);
+        return ResponseEntity.ok(response);
     }
 }

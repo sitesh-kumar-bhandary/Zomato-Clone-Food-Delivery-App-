@@ -1,4 +1,4 @@
-package com.siteshkumar.zomato_clone_backend.dto;
+package com.siteshkumar.zomato_clone_backend.dto.payment;
 
 import java.math.BigDecimal;
 import com.siteshkumar.zomato_clone_backend.enums.PaymentStatus;
@@ -11,11 +11,12 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PaymentResponseDto {
-    private Long paymentId;
+public class PaymentIntentResponseDto {
+
     private Long orderId;
-    private String paymentMode;
-    private String transactionId;
+    private String paymentIntentId;
+    private String clientSecret;
     private PaymentStatus status;
     private BigDecimal amount;
+
 }

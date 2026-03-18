@@ -27,7 +27,8 @@ import lombok.Setter;
     name="payments",
     indexes = {
         @Index(name="payment_order_ind", columnList = "order_id"),
-        @Index(name="payment_status_ind", columnList = "status")
+        @Index(name="payment_status_ind", columnList = "status"),
+        @Index(name="payment_txn_ind", columnList = "transactionId")
     }
 )
 public class PaymentEntity extends AuditableEntity{
@@ -36,7 +37,6 @@ public class PaymentEntity extends AuditableEntity{
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     private Long id;
     
-    @Column(nullable = false)
     private String paymentMode;
 
     @Column(unique = true, updatable = false)
@@ -48,6 +48,8 @@ public class PaymentEntity extends AuditableEntity{
 
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal amount;
+
+    private String clientSecret;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="order_id", nullable = false, unique = true)

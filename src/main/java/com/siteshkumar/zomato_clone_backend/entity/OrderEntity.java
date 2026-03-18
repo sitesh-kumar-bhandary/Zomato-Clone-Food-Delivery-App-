@@ -82,4 +82,8 @@ public class OrderEntity extends AuditableEntity{
 
         this.status = newStatus;
     }
+
+    public boolean isPaid() {
+        return this.status == OrderStatus.PAID;
+    }
 }
