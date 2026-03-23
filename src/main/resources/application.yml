@@ -47,3 +47,5 @@ jwt:
 
 stripe:
   secret-key: ${STRIPE_SECRET_KEY}
+  webhook:
+    secret: ${WEBHOOK_SECRET}

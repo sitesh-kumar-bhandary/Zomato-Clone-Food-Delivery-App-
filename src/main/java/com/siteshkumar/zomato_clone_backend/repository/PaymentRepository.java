@@ -8,4 +8,5 @@ import com.siteshkumar.zomato_clone_backend.entity.PaymentEntity;
 @Repository
 public interface PaymentRepository extends JpaRepository<PaymentEntity, Long>{
     Optional<PaymentEntity> findByOrderId(Long orderId);
+    Optional<PaymentEntity> findByStripePaymentIntentId(String stripePaymentIntentId);
 }

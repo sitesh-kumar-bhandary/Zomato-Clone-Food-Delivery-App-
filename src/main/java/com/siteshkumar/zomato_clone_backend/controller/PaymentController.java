@@ -1,14 +1,8 @@
 package com.siteshkumar.zomato_clone_backend.controller;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import com.siteshkumar.zomato_clone_backend.dto.payment.PaymentIntentResponseDto;
-import com.siteshkumar.zomato_clone_backend.dto.payment.PaymentResponseDto;
 import com.siteshkumar.zomato_clone_backend.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 
@@ -19,31 +13,21 @@ public class PaymentController {
 
     private final PaymentService paymentService;
 
-    @PostMapping("/{orderId}")
-    public ResponseEntity<PaymentResponseDto> processPayment(
-                                    @RequestHeader("Idempotency-Key") String key, 
-                                    @PathVariable Long orderId, 
-                                    @RequestParam String paymentMode) {
+    @PostMapping("/{orderId}/intent")
+    public ResponseEntity<PaymentIntentResponseDto> createPaymentIntent(
+            @PathVariable Long orderId,
+            @RequestHeader("Idempotency-Key") String key) {
 
-        PaymentResponseDto payment = paymentService.processPayment(orderId, paymentMode, key);
-        return ResponseEntity.ok(payment);
+        PaymentIntentResponseDto response = paymentService.createPaymentIntent(orderId, key);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/{orderId}/retry")
-    public ResponseEntity<PaymentResponseDto> retryPayment(
-                                    @PathVariable Long orderId, 
-                                    @RequestHeader("Idempotency-Key") String key) {
+    public ResponseEntity<PaymentIntentResponseDto> retryPayment(
+            @PathVariable Long orderId,
+            @RequestHeader("Idempotency-Key") String key) {
 
-        PaymentResponseDto payment = paymentService.retryPayment(orderId, key);
-        return ResponseEntity.ok(payment);
-    }
-
-    @PostMapping("/{orderId}/intent")
-    public ResponseEntity<PaymentIntentResponseDto> createPaymentIntent(
-                                    @PathVariable Long orderId, 
-                                    @RequestHeader("Idempotency-Key") String key) throws Exception {
-                                        
-        PaymentIntentResponseDto response = paymentService.createPaymentIntent(orderId, key);
+        PaymentIntentResponseDto response = paymentService.retryPayment(orderId, key);
         return ResponseEntity.ok(response);
     }
 }

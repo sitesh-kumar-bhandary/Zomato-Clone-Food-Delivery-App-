@@ -93,7 +93,8 @@ public class OrderServiceImpl implements OrderService {
                 });
 
         if (!address.getUser().getId().equals(user.getId())) {
-            log.warn("Address does not belong to user. UserId: {}, AddressId: {}", user.getId(), request.getAddressId());
+            log.warn("Address does not belong to user. UserId: {}, AddressId: {}", user.getId(),
+                    request.getAddressId());
             throw new AccessDeniedException("Address does not belong to current user");
         }
 
@@ -290,5 +291,14 @@ public class OrderServiceImpl implements OrderService {
         log.info("Order status updated successfully. OrderId: {}", orderId);
 
         return orderMapper.toResponseDto(updatedOrder);
+    }
+
+    public void markOrderAsPaid(Long orderId) {
+        OrderEntity order = orderRepository.findById(orderId)
+                                    .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        order.updateStatus(OrderStatus.PAID);
+        log.info("Marking order as PAID. OrderId: {}", orderId);
+        orderRepository.save(order);
     }
 }
