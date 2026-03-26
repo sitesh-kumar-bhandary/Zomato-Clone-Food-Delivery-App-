@@ -18,6 +18,7 @@ import com.siteshkumar.zomato_clone_backend.repository.IdempotencyKeyRepository;
 import com.siteshkumar.zomato_clone_backend.repository.OrderRepository;
 import com.siteshkumar.zomato_clone_backend.repository.PaymentRepository;
 import com.siteshkumar.zomato_clone_backend.repository.ProcessedWebhookRepository;
+import com.siteshkumar.zomato_clone_backend.service.OrderService;
 import com.siteshkumar.zomato_clone_backend.service.PaymentService;
 import com.stripe.model.PaymentIntent;
 import com.stripe.net.RequestOptions;
@@ -31,6 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 public class PaymentServiceImpl implements PaymentService {
 
     private final OrderRepository orderRepository;
+    private final OrderService orderService;
     private final PaymentRepository paymentRepository;
     private final ProcessedWebhookRepository processedWebhookRepository;
     private final IdempotencyKeyRepository idempotencyKeyRepository;
@@ -178,13 +180,43 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Transactional
-    public void handlePaymentFailure(String paymentIntentId) {
+    public void handlePaymentFailure(String paymentIntentId, String eventId) {
+
+        log.warn("Handling payment failure. PaymentIntentId: {}", paymentIntentId);
+
+        if (processedWebhookRepository.existsById(eventId)) {
+            log.warn("Duplicate webhook ignored. EventId: {}", eventId);
+            return;
+        }
 
         PaymentEntity payment = paymentRepository
                 .findByStripePaymentIntentId(paymentIntentId)
                 .orElseThrow(() -> new RuntimeException("Payment not found"));
 
+        if (payment.getStatus() == PaymentStatus.FAILED) {
+            return;
+        }
+
         payment.setStatus(PaymentStatus.FAILED);
+
+        OrderEntity order = payment.getOrder();
+
+        if (order.getPaymentStatus() == PaymentStatus.SUCCESS) {
+            log.warn("Skipping failure, payment already SUCCESS. OrderId: {}", order.getId());
+            return;
+        }
+
+        order.markPaymentFailed();
+
+        orderService.cancelOrder(order);
+
+        log.warn("Payment failure handled. OrderId: {}", order.getId());
+
+        ProcessedWebhookEntity entity = new ProcessedWebhookEntity();
+        entity.setEventId(eventId);
+        entity.setProcessedAt(LocalDateTime.now());
+
+        processedWebhookRepository.save(entity);
     }
 
     private PaymentIntentResponseDto getStoredIntentResponse(String key) {

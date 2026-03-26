@@ -7,6 +7,7 @@ import java.util.List;
 
 import com.siteshkumar.zomato_clone_backend.enums.OrderStatus;
 import com.siteshkumar.zomato_clone_backend.enums.PaymentStatus;
+import com.siteshkumar.zomato_clone_backend.enums.RefundStatus;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -34,14 +35,11 @@ import lombok.Setter;
 @Setter
 @Entity
 @NoArgsConstructor
-@Table(
-    name = "orders",
-    indexes = {
+@Table(name = "orders", indexes = {
         @Index(name = "order_user_ind", columnList = "user_id"),
         @Index(name = "order_status_ind", columnList = "status"),
         @Index(name = "order_payment_created_ind", columnList = "paymentStatus, createdAt")
-    }
-)
+})
 public class OrderEntity extends AuditableEntity {
 
     @Id
@@ -81,6 +79,10 @@ public class OrderEntity extends AuditableEntity {
     @Column
     private LocalDateTime paymentTime;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private RefundStatus refundStatus = RefundStatus.NONE;
+
     @Version
     @Column(nullable = false)
     private Long version;
@@ -98,8 +100,7 @@ public class OrderEntity extends AuditableEntity {
 
         if (!this.status.canTransitionTo(newStatus)) {
             throw new IllegalStateException(
-                "Cannot transition from " + this.status + " to " + newStatus
-            );
+                    "Cannot transition from " + this.status + " to " + newStatus);
         }
 
         this.status = newStatus;
@@ -125,10 +126,14 @@ public class OrderEntity extends AuditableEntity {
         this.paymentStatus = PaymentStatus.TIMEOUT;
     }
 
+    public void markRefundSuccess() {
+        this.refundStatus = RefundStatus.SUCCESS;
+    }
+
     // Utility Methods
 
     public boolean isCancellable() {
         return this.status != OrderStatus.DELIVERED &&
-               this.status != OrderStatus.CANCELLED;
+                this.status != OrderStatus.CANCELLED;
     }
 }

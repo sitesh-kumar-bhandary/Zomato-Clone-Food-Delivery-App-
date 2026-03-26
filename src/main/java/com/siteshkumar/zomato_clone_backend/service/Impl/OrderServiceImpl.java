@@ -17,6 +17,7 @@ import com.siteshkumar.zomato_clone_backend.dto.order.UpdateOrderStatusRequestDt
 import com.siteshkumar.zomato_clone_backend.entity.*;
 import com.siteshkumar.zomato_clone_backend.enums.OrderStatus;
 import com.siteshkumar.zomato_clone_backend.enums.PaymentStatus;
+import com.siteshkumar.zomato_clone_backend.enums.RefundStatus;
 import com.siteshkumar.zomato_clone_backend.enums.Role;
 import com.siteshkumar.zomato_clone_backend.exception.AddressNotFoundException;
 import com.siteshkumar.zomato_clone_backend.exception.ResourceNotFoundException;
@@ -241,13 +242,7 @@ public class OrderServiceImpl implements OrderService {
             throw new IllegalStateException("Order can not be cancelled at this stage");
         }
 
-        for (OrderItemEntity item : order.getItems()) {
-            inventoryService.restoreStock(
-                    item.getMenuItem().getId(),
-                    item.getQuantity());
-        }
-
-        order.updateStatus(OrderStatus.CANCELLED);
+        cancelOrder(order);
 
         log.info("Order cancelled successfully. OrderId: {}", orderId);
 
@@ -321,6 +316,9 @@ public class OrderServiceImpl implements OrderService {
             throw new IllegalStateException("Delivered order cannot be cancelled");
         }
 
+        if (order.getPaymentStatus() == PaymentStatus.SUCCESS && order.getRefundStatus() == RefundStatus.NONE)
+            processRefund(order);
+
         for (OrderItemEntity item : order.getItems()) {
             inventoryService.restoreStock(
                     item.getMenuItem().getId(),
@@ -344,7 +342,15 @@ public class OrderServiceImpl implements OrderService {
 
         order.markPaymentTimeout();
 
-        cancelOrder(order); 
+        cancelOrder(order);
     }
 
+    @Transactional
+    public void processRefund(OrderEntity order) {
+        log.info("Mock refund initiated for OrderId: {}", order.getId());
+
+        order.markRefundSuccess();
+
+        log.info("Mock refund initiated for OrderId: {}", order.getId());
+    }
 }

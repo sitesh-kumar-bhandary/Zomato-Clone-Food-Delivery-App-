@@ -83,6 +83,6 @@ public class StripeWebhookService {
 
         log.warn("Payment failed for PaymentIntentId: {}", intent.getId());
 
-        paymentService.handlePaymentFailure(intent.getId());
+        paymentService.handlePaymentFailure(intent.getId(), event.getId());
     }
 }
