@@ -60,7 +60,7 @@ public class OrderController {
 
     @PatchMapping("/{orderId}/cancel")
     @PreAuthorize("hasAnyRole('CUSTOMER', 'RESTAURANT')")
-    public ResponseEntity<OrderResponseDto> cancelOrder(@PathVariable Long orderId){
+    public ResponseEntity<OrderResponseDto> cancelMyOrder(@PathVariable Long orderId){
         OrderResponseDto cancelledOrder = orderService.cancelMyOrder(orderId);
         return ResponseEntity.ok(cancelledOrder);
     }

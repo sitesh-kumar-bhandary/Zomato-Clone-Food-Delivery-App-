@@ -6,7 +6,6 @@ import java.util.Set;
 public enum OrderStatus {
     CREATED,
     PLACED,
-    PAID,
     CONFIRMED,
     PREPARING,
     OUT_FOR_DELIVERY,
@@ -14,15 +13,14 @@ public enum OrderStatus {
     CANCELLED;
 
     private static final Map<OrderStatus, Set<OrderStatus>> VALID_TRANSITIONS = Map.of(
-                CREATED, Set.of(PLACED, CANCELLED),
-                PLACED, Set.of(PAID, CANCELLED),
-                PAID, Set.of(CONFIRMED),
-                CONFIRMED, Set.of(PREPARING, CANCELLED),
-                PREPARING, Set.of(OUT_FOR_DELIVERY),
-                OUT_FOR_DELIVERY, Set.of(DELIVERED),
-                DELIVERED, Set.of(),
-                CANCELLED, Set.of()
-    );
+                    CREATED, Set.of(PLACED, CANCELLED),
+                    PLACED, Set.of(CONFIRMED, CANCELLED),
+                    CONFIRMED, Set.of(PREPARING, CANCELLED),
+                    PREPARING, Set.of(OUT_FOR_DELIVERY),
+                    OUT_FOR_DELIVERY, Set.of(DELIVERED, CANCELLED),
+                    DELIVERED, Set.of(),
+                    CANCELLED, Set.of()
+);
 
     public boolean canTransitionTo(OrderStatus next){
 

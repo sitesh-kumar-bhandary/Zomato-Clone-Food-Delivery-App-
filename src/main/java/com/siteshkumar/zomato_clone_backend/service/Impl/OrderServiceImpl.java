@@ -6,18 +6,17 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import com.siteshkumar.zomato_clone_backend.dto.order.OrderResponseDto;
 import com.siteshkumar.zomato_clone_backend.dto.order.PlaceOrderRequestDto;
 import com.siteshkumar.zomato_clone_backend.dto.order.UpdateOrderStatusRequestDto;
 import com.siteshkumar.zomato_clone_backend.entity.*;
 import com.siteshkumar.zomato_clone_backend.enums.OrderStatus;
+import com.siteshkumar.zomato_clone_backend.enums.PaymentStatus;
 import com.siteshkumar.zomato_clone_backend.enums.Role;
 import com.siteshkumar.zomato_clone_backend.exception.AddressNotFoundException;
 import com.siteshkumar.zomato_clone_backend.exception.ResourceNotFoundException;
@@ -28,7 +27,6 @@ import com.siteshkumar.zomato_clone_backend.service.OrderService;
 import com.siteshkumar.zomato_clone_backend.service.redis.RedisLockService;
 import com.siteshkumar.zomato_clone_backend.utils.AuthUtils;
 import com.siteshkumar.zomato_clone_backend.utils.CartUtils;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -293,12 +291,60 @@ public class OrderServiceImpl implements OrderService {
         return orderMapper.toResponseDto(updatedOrder);
     }
 
-    public void markOrderAsPaid(Long orderId) {
-        OrderEntity order = orderRepository.findById(orderId)
-                                    .orElseThrow(() -> new RuntimeException("Order not found"));
+    @Transactional
+    public void markPaymentSuccess(Long orderId, String paymentIntentId) {
 
-        order.updateStatus(OrderStatus.PAID);
-        log.info("Marking order as PAID. OrderId: {}", orderId);
+        OrderEntity order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        if (order.getPaymentStatus() == PaymentStatus.SUCCESS) {
+            return;
+        }
+
+        order.markPaymentSuccess(paymentIntentId);
+
+        order.updateStatus(OrderStatus.CONFIRMED);
+
+        log.info("Payment successful. OrderId: {}", orderId);
+
         orderRepository.save(order);
     }
+
+    @Transactional
+    public void cancelOrder(OrderEntity order) {
+
+        if (order.getStatus() == OrderStatus.CANCELLED) {
+            return;
+        }
+
+        if (order.getStatus() == OrderStatus.DELIVERED) {
+            throw new IllegalStateException("Delivered order cannot be cancelled");
+        }
+
+        for (OrderItemEntity item : order.getItems()) {
+            inventoryService.restoreStock(
+                    item.getMenuItem().getId(),
+                    item.getQuantity());
+        }
+
+        order.updateStatus(OrderStatus.CANCELLED);
+
+        log.warn("Order cancelled by system. OrderId: {}", order.getId());
+    }
+
+    @Transactional
+    public void handlePaymentTimeout(Long orderId) {
+
+        OrderEntity order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        if (order.getPaymentStatus() != PaymentStatus.PENDING) {
+            return;
+        }
+
+        order.markPaymentTimeout();
+
+        cancelOrder(order); 
+    }
+
 }

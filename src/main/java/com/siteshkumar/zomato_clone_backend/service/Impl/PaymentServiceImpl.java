@@ -245,10 +245,15 @@ public class PaymentServiceImpl implements PaymentService {
         OrderEntity order = payment.getOrder();
 
         if (!order.isPaid()) {
-            order.updateStatus(OrderStatus.PAID);
-            log.info("Order marked as PAID. OrderId: {}", order.getId());
+
+            order.markPaymentSuccess(paymentIntentId);
+
+            order.updateStatus(OrderStatus.CONFIRMED);
+
+            log.info("Order marked as CONFIRMED. OrderId: {}", order.getId());
+
         } else {
-            log.warn("Order already marked as PAID. OrderId: {}", order.getId());
+            log.warn("Order already processed. OrderId: {}", order.getId());
         }
 
         ProcessedWebhookEntity entity = new ProcessedWebhookEntity();

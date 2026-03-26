@@ -2,7 +2,6 @@ package com.siteshkumar.zomato_clone_backend.service;
 
 import com.stripe.model.Event;
 import com.stripe.model.PaymentIntent;
-import com.siteshkumar.zomato_clone_backend.service.Impl.OrderServiceImpl;
 import com.siteshkumar.zomato_clone_backend.service.Impl.PaymentServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +12,6 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class StripeWebhookService {
 
-    private final OrderServiceImpl orderService;
     private final PaymentServiceImpl paymentService;
 
     public void handleEvent(Event event) {
@@ -63,8 +61,6 @@ public class StripeWebhookService {
 
         try {
             paymentService.handlePaymentSuccess(intent.getId(), orderId, event.getId());
-
-            orderService.markOrderAsPaid(orderId);
 
         } catch (Exception e) {
             log.error("Error processing payment success webhook", e);
