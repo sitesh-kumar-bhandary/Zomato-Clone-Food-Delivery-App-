@@ -58,11 +58,11 @@ public class StripeWebhookService {
 
         Long orderId = Long.valueOf(orderIdStr);
 
-        log.info("PaymentIntent succeeded. OrderId: {}, IntentId: {}", 
-                 orderId, intent.getId());
+        log.info("PaymentIntent succeeded. OrderId: {}, IntentId: {}",
+                orderId, intent.getId());
 
         try {
-            paymentService.handlePaymentSuccess(intent.getId(), orderId);
+            paymentService.handlePaymentSuccess(intent.getId(), orderId, event.getId());
 
             orderService.markOrderAsPaid(orderId);
 

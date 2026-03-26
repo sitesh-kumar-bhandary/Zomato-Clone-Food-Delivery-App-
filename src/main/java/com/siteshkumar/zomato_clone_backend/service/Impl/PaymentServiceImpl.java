@@ -1,6 +1,7 @@
 package com.siteshkumar.zomato_clone_backend.service.Impl;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,12 +10,14 @@ import com.siteshkumar.zomato_clone_backend.dto.payment.PaymentIntentResponseDto
 import com.siteshkumar.zomato_clone_backend.entity.IdempotencyKeyEntity;
 import com.siteshkumar.zomato_clone_backend.entity.OrderEntity;
 import com.siteshkumar.zomato_clone_backend.entity.PaymentEntity;
+import com.siteshkumar.zomato_clone_backend.entity.ProcessedWebhookEntity;
 import com.siteshkumar.zomato_clone_backend.enums.OrderStatus;
 import com.siteshkumar.zomato_clone_backend.enums.PaymentMode;
 import com.siteshkumar.zomato_clone_backend.enums.PaymentStatus;
 import com.siteshkumar.zomato_clone_backend.repository.IdempotencyKeyRepository;
 import com.siteshkumar.zomato_clone_backend.repository.OrderRepository;
 import com.siteshkumar.zomato_clone_backend.repository.PaymentRepository;
+import com.siteshkumar.zomato_clone_backend.repository.ProcessedWebhookRepository;
 import com.siteshkumar.zomato_clone_backend.service.PaymentService;
 import com.stripe.model.PaymentIntent;
 import com.stripe.net.RequestOptions;
@@ -29,6 +32,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     private final OrderRepository orderRepository;
     private final PaymentRepository paymentRepository;
+    private final ProcessedWebhookRepository processedWebhookRepository;
     private final IdempotencyKeyRepository idempotencyKeyRepository;
     private final ObjectMapper objectMapper;
 
@@ -120,6 +124,10 @@ public class PaymentServiceImpl implements PaymentService {
 
         log.info("Retrying payment. OrderId: {}", orderId);
 
+        PaymentIntentResponseDto stored = getStoredIntentResponse(key);
+        if (stored != null)
+            return stored;
+
         OrderEntity order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
 
@@ -135,12 +143,17 @@ public class PaymentServiceImpl implements PaymentService {
                     .multiply(BigDecimal.valueOf(100))
                     .longValue();
 
+            RequestOptions options = RequestOptions.builder()
+                    .setIdempotencyKey(key)
+                    .build();
+
             PaymentIntent intent = PaymentIntent.create(
                     PaymentIntentCreateParams.builder()
                             .setAmount(amountInPaise)
                             .setCurrency("inr")
                             .putMetadata("orderId", orderId.toString())
-                            .build());
+                            .build(),
+                    options);
 
             payment.setStripePaymentIntentId(intent.getId());
             payment.setClientSecret(intent.getClientSecret());
@@ -148,12 +161,16 @@ public class PaymentServiceImpl implements PaymentService {
 
             paymentRepository.save(payment);
 
-            return new PaymentIntentResponseDto(
+            PaymentIntentResponseDto response = new PaymentIntentResponseDto(
                     orderId,
                     intent.getId(),
                     intent.getClientSecret(),
                     PaymentStatus.PENDING,
                     order.getTotalAmount());
+
+            storeIntentIdempotency(key, orderId, response);
+
+            return response;
 
         } catch (Exception e) {
             throw new RuntimeException("Retry failed");
@@ -198,10 +215,16 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Transactional
-    public void handlePaymentSuccess(String paymentIntentId, Long orderId) {
+    public void handlePaymentSuccess(String paymentIntentId, Long orderId, String eventId) {
 
         log.info("Handling payment success. PaymentIntentId: {}, OrderId: {}",
                 paymentIntentId, orderId);
+
+        if (processedWebhookRepository.existsById(eventId)) {
+            log.warn("Duplicate webhook ignored. EventId: {}", eventId);
+            return;
+        }
+
         PaymentEntity payment = paymentRepository
                 .findByStripePaymentIntentId(paymentIntentId)
                 .orElseThrow(() -> {
@@ -227,5 +250,11 @@ public class PaymentServiceImpl implements PaymentService {
         } else {
             log.warn("Order already marked as PAID. OrderId: {}", order.getId());
         }
+
+        ProcessedWebhookEntity entity = new ProcessedWebhookEntity();
+        entity.setEventId(eventId);
+        entity.setProcessedAt(LocalDateTime.now());
+
+        processedWebhookRepository.save(entity);
     }
 }

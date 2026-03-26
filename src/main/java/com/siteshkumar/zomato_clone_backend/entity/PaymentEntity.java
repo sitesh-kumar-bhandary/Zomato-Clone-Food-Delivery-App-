@@ -1,7 +1,6 @@
 package com.siteshkumar.zomato_clone_backend.entity;
 
 import java.math.BigDecimal;
-
 import com.siteshkumar.zomato_clone_backend.enums.PaymentMode;
 import com.siteshkumar.zomato_clone_backend.enums.PaymentStatus;
 import jakarta.persistence.Column;
