@@ -49,3 +49,8 @@ stripe:
   secret-key: ${STRIPE_SECRET_KEY}
   webhook:
     secret: ${WEBHOOK_SECRET}
+
+#logging properties
+logging:
+  pattern:
+    level: %5p [reqId=%X{requestId}]
