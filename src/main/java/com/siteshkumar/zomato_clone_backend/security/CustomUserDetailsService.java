@@ -5,7 +5,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import com.siteshkumar.zomato_clone_backend.entity.UserEntity;
-import com.siteshkumar.zomato_clone_backend.repository.UserRepository;
+import com.siteshkumar.zomato_clone_backend.repository.mysql.UserRepository;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 

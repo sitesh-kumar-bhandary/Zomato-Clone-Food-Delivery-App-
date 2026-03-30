@@ -20,9 +20,9 @@ import com.siteshkumar.zomato_clone_backend.enums.Role;
 import com.siteshkumar.zomato_clone_backend.exception.ResourceNotFoundException;
 import com.siteshkumar.zomato_clone_backend.exception.UserAlreadyBlockedException;
 import com.siteshkumar.zomato_clone_backend.mapper.OrderMapper;
-import com.siteshkumar.zomato_clone_backend.repository.OrderRepository;
-import com.siteshkumar.zomato_clone_backend.repository.RestaurantRepository;
-import com.siteshkumar.zomato_clone_backend.repository.UserRepository;
+import com.siteshkumar.zomato_clone_backend.repository.mysql.OrderRepository;
+import com.siteshkumar.zomato_clone_backend.repository.mysql.RestaurantRepository;
+import com.siteshkumar.zomato_clone_backend.repository.mysql.UserRepository;
 import com.siteshkumar.zomato_clone_backend.service.AdminService;
 
 import lombok.RequiredArgsConstructor;

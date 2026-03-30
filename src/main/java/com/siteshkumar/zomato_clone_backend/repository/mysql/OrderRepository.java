@@ -1,4 +1,4 @@
-package com.siteshkumar.zomato_clone_backend.repository;
+package com.siteshkumar.zomato_clone_backend.repository.mysql;
 
 import java.time.LocalDateTime;
 import java.util.List;

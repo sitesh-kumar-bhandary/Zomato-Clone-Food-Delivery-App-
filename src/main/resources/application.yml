@@ -33,6 +33,10 @@ spring:
   cache:
     type: redis
 
+  #Elastic search 
+  elasticsearch:
+    uris: ${ELASTIC_SEARCH_URI}
+
 server:
   servlet:
     context-path: /api/v1
@@ -54,3 +58,4 @@ stripe:
 logging:
   pattern:
     level: %5p [reqId=%X{requestId}]
+

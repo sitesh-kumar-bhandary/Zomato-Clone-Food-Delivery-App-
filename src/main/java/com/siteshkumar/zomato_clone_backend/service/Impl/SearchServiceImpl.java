@@ -1,22 +1,20 @@
 package com.siteshkumar.zomato_clone_backend.service.Impl;
 
+import java.math.BigDecimal;
 import java.util.List;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import com.siteshkumar.zomato_clone_backend.document.MenuItemDocument;
+import com.siteshkumar.zomato_clone_backend.document.RestaurantDocument;
 import com.siteshkumar.zomato_clone_backend.dto.SearchResponseDto;
 import com.siteshkumar.zomato_clone_backend.dto.menuItem.MenuItemResponseDto;
 import com.siteshkumar.zomato_clone_backend.dto.restaurant.RestaurantResponseDto;
-import com.siteshkumar.zomato_clone_backend.entity.MenuItemEntity;
-import com.siteshkumar.zomato_clone_backend.entity.RestaurantEntity;
-import com.siteshkumar.zomato_clone_backend.repository.MenuItemRepository;
-import com.siteshkumar.zomato_clone_backend.repository.RestaurantRepository;
+import com.siteshkumar.zomato_clone_backend.repository.elasticsearch.MenuItemSearchRepository;
+import com.siteshkumar.zomato_clone_backend.repository.elasticsearch.RestaurantSearchRepository;
 import com.siteshkumar.zomato_clone_backend.service.SearchService;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -25,8 +23,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class SearchServiceImpl implements SearchService {
 
-    private final RestaurantRepository restaurantRepository;
-    private final MenuItemRepository menuItemRepository;
+    private final RestaurantSearchRepository restaurantSearchRepository;
+    private final MenuItemSearchRepository menuItemSearchRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -36,47 +34,53 @@ public class SearchServiceImpl implements SearchService {
 
         Pageable pageable = PageRequest.of(page, size);
 
-        Page<RestaurantEntity> restaurants = 
-                            restaurantRepository.findByNameContainingIgnoreCase(query, pageable);
+        Page<RestaurantDocument> restaurants = restaurantSearchRepository
+                .findByNameContainingIgnoreCaseOrCityContainingIgnoreCase(query, query, pageable);
 
-        Page<MenuItemEntity> items =
-                            menuItemRepository.findByNameContainingIgnoreCase(query, pageable);
+        Page<MenuItemDocument> items = menuItemSearchRepository
+                .findByNameContainingIgnoreCase(query, pageable);
 
-        log.info("Search results fetched. Restaurants: {}, MenuItems: {}", 
-                    restaurants.getTotalElements(), items.getTotalElements());
+        log.info("Search results fetched. Restaurants: {}, MenuItems: {}",
+                restaurants.getTotalElements(), items.getTotalElements());
 
-        return mapToResponse(restaurants, items);
+        return mapToResponse(restaurants, items, page, size);
     }
 
-    private SearchResponseDto mapToResponse(Page<RestaurantEntity> restaurants, Page<MenuItemEntity> items){
+    private SearchResponseDto mapToResponse(
+            Page<RestaurantDocument> restaurants,
+            Page<MenuItemDocument> items,
+            int page,
+            int size) {
 
         log.debug("Mapping search results to response DTO");
 
         List<RestaurantResponseDto> restaurantDtos = restaurants
-            .stream()
-            .map(r -> RestaurantResponseDto.builder()
-                .id(r.getId())
-                .name(r.getName())
-                .city(r.getCity())
-                .build())
-            .toList();
+                .getContent()
+                .stream()
+                .map(r -> RestaurantResponseDto.builder()
+                        .id(Long.parseLong(r.getId()))
+                        .name(r.getName())
+                        .city(r.getCity())
+                        .build())
+                .toList();
 
-        List<MenuItemResponseDto> menuItemDtos = items
-            .stream()
-            .map(m -> MenuItemResponseDto.builder()
-                .id(m.getId())
-                .name(m.getName())
-                .price(m.getPrice())
-                .restaurantName(m.getRestaurant().getName())
-                .build())
-            .toList();
-
-        log.debug("Mapped {} restaurants and {} menu items", 
-                    restaurantDtos.size(), menuItemDtos.size());
+        List<MenuItemResponseDto> menuItemDtos = items.getContent()
+                .stream()
+                .map((MenuItemDocument m) -> MenuItemResponseDto.builder()
+                        .id(m.getId() != null ? Long.parseLong(m.getId()) : null)
+                        .name(m.getName())
+                        .price(m.getPrice() != null ? BigDecimal.valueOf(m.getPrice()) : null) // ✅ FIX
+                        .restaurantName(null)
+                        .build())
+                .toList();
 
         return SearchResponseDto.builder()
                 .restaurants(restaurantDtos)
                 .menuItems(menuItemDtos)
+                .page(page)
+                .size(size)
+                .totalRestaurants(restaurants.getTotalElements())
+                .totalMenuItems(items.getTotalElements())
                 .build();
     }
 }

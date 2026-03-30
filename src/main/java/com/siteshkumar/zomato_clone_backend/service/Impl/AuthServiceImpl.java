@@ -17,7 +17,7 @@ import com.siteshkumar.zomato_clone_backend.enums.Role;
 import com.siteshkumar.zomato_clone_backend.exception.AccountNotApprovedException;
 import com.siteshkumar.zomato_clone_backend.exception.EmailAlreadyExistsException;
 import com.siteshkumar.zomato_clone_backend.exception.PhoneAlreadyExistsException;
-import com.siteshkumar.zomato_clone_backend.repository.UserRepository;
+import com.siteshkumar.zomato_clone_backend.repository.mysql.UserRepository;
 import com.siteshkumar.zomato_clone_backend.security.CustomUserDetails;
 import com.siteshkumar.zomato_clone_backend.service.AuthService;
 import com.siteshkumar.zomato_clone_backend.utils.AuthUtils;

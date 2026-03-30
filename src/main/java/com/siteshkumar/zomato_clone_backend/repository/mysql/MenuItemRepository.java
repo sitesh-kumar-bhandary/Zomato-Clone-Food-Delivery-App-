@@ -1,4 +1,4 @@
-package com.siteshkumar.zomato_clone_backend.repository;
+package com.siteshkumar.zomato_clone_backend.repository.mysql;
 
 import java.util.Optional;
 import org.springframework.data.domain.Page;
@@ -9,6 +9,7 @@ import com.siteshkumar.zomato_clone_backend.entity.MenuItemEntity;
 
 @Repository
 public interface MenuItemRepository extends JpaRepository<MenuItemEntity, Long>{  
+    
     Optional<MenuItemEntity> findByIdAndRestaurantId(Long menuItemId, Long restaurantId);
     Page<MenuItemEntity> findByRestaurantId(Long restaurantId, Pageable pageable);
     Page<MenuItemEntity> findByNameContainingIgnoreCase(String name, Pageable pageable);

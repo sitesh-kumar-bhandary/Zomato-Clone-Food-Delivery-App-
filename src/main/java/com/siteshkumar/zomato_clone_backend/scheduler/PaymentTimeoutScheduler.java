@@ -6,7 +6,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import com.siteshkumar.zomato_clone_backend.entity.OrderEntity;
 import com.siteshkumar.zomato_clone_backend.enums.PaymentStatus;
-import com.siteshkumar.zomato_clone_backend.repository.OrderRepository;
+import com.siteshkumar.zomato_clone_backend.repository.mysql.OrderRepository;
 import com.siteshkumar.zomato_clone_backend.service.Impl.OrderServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

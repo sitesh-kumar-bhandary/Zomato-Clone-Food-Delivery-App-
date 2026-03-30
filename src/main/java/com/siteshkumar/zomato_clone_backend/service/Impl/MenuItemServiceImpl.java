@@ -8,6 +8,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.siteshkumar.zomato_clone_backend.document.MenuItemDocument;
 import com.siteshkumar.zomato_clone_backend.dto.menuItem.CreateMenuItemRequestDto;
 import com.siteshkumar.zomato_clone_backend.dto.menuItem.CreateMenuItemResponseDto;
 import com.siteshkumar.zomato_clone_backend.dto.menuItem.MenuItemResponseDto;
@@ -18,8 +19,9 @@ import com.siteshkumar.zomato_clone_backend.entity.RestaurantEntity;
 import com.siteshkumar.zomato_clone_backend.entity.UserEntity;
 import com.siteshkumar.zomato_clone_backend.exception.ResourceNotFoundException;
 import com.siteshkumar.zomato_clone_backend.mapper.MenuItemMapper;
-import com.siteshkumar.zomato_clone_backend.repository.MenuItemRepository;
-import com.siteshkumar.zomato_clone_backend.repository.RestaurantRepository;
+import com.siteshkumar.zomato_clone_backend.repository.elasticsearch.MenuItemSearchRepository;
+import com.siteshkumar.zomato_clone_backend.repository.mysql.MenuItemRepository;
+import com.siteshkumar.zomato_clone_backend.repository.mysql.RestaurantRepository;
 import com.siteshkumar.zomato_clone_backend.service.MenuItemService;
 import com.siteshkumar.zomato_clone_backend.service.MetricsService;
 import com.siteshkumar.zomato_clone_backend.utils.AuthUtils;
@@ -35,6 +37,7 @@ public class MenuItemServiceImpl implements MenuItemService {
     private final AuthUtils authUtils;
     private final MetricsService metricsService;
     private final RestaurantRepository restaurantRepository;
+    private final MenuItemSearchRepository menuItemSearchRepository;
     private final MenuItemRepository menuItemRepository;
     private final MenuItemMapper menuItemMapper;
 
@@ -67,6 +70,9 @@ public class MenuItemServiceImpl implements MenuItemService {
         MenuItemEntity savedMenuItem = menuItemRepository.save(menuItem);
 
         log.info("Menu item created successfully. MenuItemId: {}", savedMenuItem.getId());
+
+        MenuItemDocument document = menuItemMapper.toDocument(savedMenuItem);
+        menuItemSearchRepository.save(document);
 
         return menuItemMapper.toCreateResponseDto(savedMenuItem);
     }
@@ -108,6 +114,9 @@ public class MenuItemServiceImpl implements MenuItemService {
 
         log.info("Menu item updated successfully. MenuItemId: {}", menuItemId);
 
+        MenuItemDocument document = menuItemMapper.toDocument(savedMenuItem);
+        menuItemSearchRepository.save(document);
+
         return menuItemMapper.toUpdateResponeDto(savedMenuItem);
     }
 
@@ -136,6 +145,9 @@ public class MenuItemServiceImpl implements MenuItemService {
 
         menuItem.setAvailable(false);
         menuItemRepository.save(menuItem);
+
+        MenuItemDocument document = menuItemMapper.toDocument(menuItem);
+        menuItemSearchRepository.save(document);
 
         log.info("Menu item soft deleted successfully. MenuItemId: {}", menuItemId);
     }

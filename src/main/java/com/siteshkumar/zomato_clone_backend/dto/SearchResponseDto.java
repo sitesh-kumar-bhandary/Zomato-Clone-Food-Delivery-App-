@@ -17,5 +17,10 @@ public class SearchResponseDto {
 
     private List<RestaurantResponseDto> restaurants;
     private List<MenuItemResponseDto> menuItems;
+
+    private int page;
+    private int size;
+    private long totalRestaurants;
+    private long totalMenuItems;
     
 }

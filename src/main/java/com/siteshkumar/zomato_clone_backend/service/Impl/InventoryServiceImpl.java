@@ -5,7 +5,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.siteshkumar.zomato_clone_backend.entity.MenuItemEntity;
 import com.siteshkumar.zomato_clone_backend.exception.ResourceNotFoundException;
-import com.siteshkumar.zomato_clone_backend.repository.MenuItemRepository;
+import com.siteshkumar.zomato_clone_backend.repository.mysql.MenuItemRepository;
 import com.siteshkumar.zomato_clone_backend.service.InventoryService;
 
 import lombok.RequiredArgsConstructor;

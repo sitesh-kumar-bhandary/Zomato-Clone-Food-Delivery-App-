@@ -2,8 +2,10 @@ package com.siteshkumar.zomato_clone_backend.scheduler;
 
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import com.siteshkumar.zomato_clone_backend.repository.OrderRepository;
-import com.siteshkumar.zomato_clone_backend.repository.UserRepository;
+
+import com.siteshkumar.zomato_clone_backend.repository.mysql.OrderRepository;
+import com.siteshkumar.zomato_clone_backend.repository.mysql.UserRepository;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 

@@ -8,6 +8,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.siteshkumar.zomato_clone_backend.document.RestaurantDocument;
 import com.siteshkumar.zomato_clone_backend.dto.restaurant.CreateRestaurantRequestDto;
 import com.siteshkumar.zomato_clone_backend.dto.restaurant.CreateRestaurantResponseDto;
 import com.siteshkumar.zomato_clone_backend.dto.restaurant.RestaurantResponseDto;
@@ -20,7 +21,8 @@ import com.siteshkumar.zomato_clone_backend.enums.Role;
 import com.siteshkumar.zomato_clone_backend.exception.AccountNotApprovedException;
 import com.siteshkumar.zomato_clone_backend.exception.ResourceNotFoundException;
 import com.siteshkumar.zomato_clone_backend.mapper.RestaurantMapper;
-import com.siteshkumar.zomato_clone_backend.repository.RestaurantRepository;
+import com.siteshkumar.zomato_clone_backend.repository.elasticsearch.RestaurantSearchRepository;
+import com.siteshkumar.zomato_clone_backend.repository.mysql.RestaurantRepository;
 import com.siteshkumar.zomato_clone_backend.security.CustomUserDetails;
 import com.siteshkumar.zomato_clone_backend.service.MetricsService;
 import com.siteshkumar.zomato_clone_backend.service.RestaurantService;
@@ -38,6 +40,7 @@ public class RestaurantServiceImpl implements RestaurantService{
     private final MetricsService metricsService;
     private final RestaurantMapper restaurantMapper;
     private final RestaurantRepository restaurantRepository;
+    private final RestaurantSearchRepository restaurantSearchRepository;
 
     @Override
     @Transactional
@@ -63,6 +66,9 @@ public class RestaurantServiceImpl implements RestaurantService{
         restaurant.setOwner(user.getUser());
 
         RestaurantEntity savedRestaurant = restaurantRepository.save(restaurant);
+
+        RestaurantDocument document = restaurantMapper.toDocument(savedRestaurant);
+        restaurantSearchRepository.save(document);
 
         log.info("Restaurant created successfully. RestaurantId: {}", savedRestaurant.getId());
 
@@ -98,6 +104,9 @@ public class RestaurantServiceImpl implements RestaurantService{
 
         RestaurantEntity updatedRestaurant = restaurantRepository.save(restaurant);
 
+        RestaurantDocument document = restaurantMapper.toDocument(updatedRestaurant);
+        restaurantSearchRepository.save(document);
+
         log.info("Restaurant updated successfully. RestaurantId: {}", id);
 
         return restaurantMapper.toUpdateResponseDto(updatedRestaurant);
@@ -126,6 +135,9 @@ public class RestaurantServiceImpl implements RestaurantService{
 
         restaurant.setActive(false);
         restaurantRepository.save(restaurant);
+
+        RestaurantDocument document = restaurantMapper.toDocument(restaurant);
+        restaurantSearchRepository.save(document);
 
         log.info("Restaurant soft deleted successfully. RestaurantId: {}", id);
     }
