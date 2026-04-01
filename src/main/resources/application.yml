@@ -57,5 +57,5 @@ stripe:
 #logging properties
 logging:
   pattern:
-    level: %5p [reqId=%X{requestId}]
+    level: "%5p [reqId=%X{requestId}]"
 

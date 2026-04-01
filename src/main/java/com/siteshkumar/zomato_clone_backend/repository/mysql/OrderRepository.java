@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import com.siteshkumar.zomato_clone_backend.entity.OrderEntity;
 import com.siteshkumar.zomato_clone_backend.enums.OrderStatus;
@@ -36,7 +37,7 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
     @Query("""
                 SELECT COALESCE(SUM(o.totalAmount), 0)
                 FROM OrderEntity o
-                WHERE o.paymentStatus = com.siteshkumar.zomato_clone_backend.enums.PaymentStatus.COMPLETED
+                WHERE o.paymentStatus = :status
             """)
-    Double getTotalRevenue();
+    Double getTotalRevenue(@Param("status") PaymentStatus status);
 }

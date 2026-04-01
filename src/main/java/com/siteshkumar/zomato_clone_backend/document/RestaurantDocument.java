@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Document(indexName="restaurant_index")
+@Document(indexName = "restaurant_index")
 public class RestaurantDocument {
 
     @Id
