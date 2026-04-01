@@ -31,6 +31,8 @@ It integrates **Elasticsearch** to replace traditional database search, enabling
 
 #### Database: MySQL
 
+#### Caching : Redis
+
 #### Search Engine: Elasticsearch
 
 #### Security: Spring Security (JWT-based)
@@ -127,12 +129,18 @@ GET /search/suggest?keyword=pi
 ## 📁 Project Structure
 
 ```id="v2u8yv"
-controller/        → REST APIs
-service/           → Business logic
-repository/        → Database & Elasticsearch access
-document/          → Elasticsearch documents
-dto/               → Request/Response models
-config/            → Security & application configs
+controller/        → REST APIs (entry point for all client requests)
+service/           → Business logic implementation
+repository/        → Data access layer (MySQL + Elasticsearch)
+document/          → Elasticsearch documents (indexed data models)
+entity/            → JPA entities (database models)
+dto/               → Request & response transfer objects
+mapper/            → Entity ↔ DTO conversion logic
+config/            → Security, Elasticsearch, and app configurations
+filter/            → Request filters (JWT authentication, etc.)
+exception/         → Global exception handling
+enums/             → Application constants & enums
+scheduler/         → Scheduled tasks (background jobs)
 ```
 
 ---
@@ -162,6 +170,7 @@ config/            → Security & application configs
 * Java 17+
 * Maven
 * MySQL
+* Redis
 * Elasticsearch (running on port 9200)
 
 ---
@@ -208,8 +217,9 @@ docker.elastic.co/elasticsearch/elasticsearch:8.11.1
 
 ## 📈 Future Enhancements
 
-* Advanced filtering (cuisine, rating, price)
-* Caching frequently accessed data
+* Audit Logs
+* Promo Codes
+* Google Maps API
 * Deployment (AWS / Render)
 * Monitoring and observability
 
