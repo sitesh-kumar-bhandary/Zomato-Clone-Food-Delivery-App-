@@ -21,6 +21,15 @@ It integrates **Elasticsearch** to replace traditional database search, enabling
 * Typo-tolerant queries
 * Relevance-based ranking
 
+Additionally, the system incorporates **Redis** for caching and performance optimization, along with **Redis-based distributed locking** to ensure safe concurrent operations such as order processing.
+
+Background tasks are handled using **schedulers**, which manage operations like updating order/payment status asynchronously.
+
+The project also includes **Swagger UI** for interactive API documentation and testing, and a structured **logging system** to monitor application behavior and assist in debugging.
+
+Overall, the system is designed with a focus on **scalability, performance, and real-world backend practices**.
+
+
 ---
 
 ## 🛠 Tech Stack
