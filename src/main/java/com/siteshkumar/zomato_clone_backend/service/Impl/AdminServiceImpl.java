@@ -1,6 +1,7 @@
 package com.siteshkumar.zomato_clone_backend.service.Impl;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -23,6 +24,7 @@ import com.siteshkumar.zomato_clone_backend.enums.Role;
 import com.siteshkumar.zomato_clone_backend.exception.ResourceNotFoundException;
 import com.siteshkumar.zomato_clone_backend.exception.UserAlreadyBlockedException;
 import com.siteshkumar.zomato_clone_backend.mapper.OrderMapper;
+import com.siteshkumar.zomato_clone_backend.mapper.UserMapper;
 import com.siteshkumar.zomato_clone_backend.repository.mysql.OrderRepository;
 import com.siteshkumar.zomato_clone_backend.repository.mysql.RestaurantRepository;
 import com.siteshkumar.zomato_clone_backend.repository.mysql.UserRepository;
@@ -39,6 +41,7 @@ public class AdminServiceImpl implements AdminService {
     private final RestaurantRepository restaurantRepository;
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
+    private final UserMapper userMapper;
     private final OrderMapper orderMapper;
 
     @Override
@@ -202,7 +205,7 @@ public class AdminServiceImpl implements AdminService {
     public UserApproveResponseDto approveUser(Long id) {
         UserEntity user = userRepository.findById(id).orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        if(user.getRole() != Role.RESTAURANT)
+        if(user.getRole() != Role.RESTAURANT_OWNER)
             throw new RuntimeException("Only restaurant owners need approval");
 
         if (user.getStatus() == AccountStatus.APPROVED)
@@ -211,12 +214,17 @@ public class AdminServiceImpl implements AdminService {
         user.setStatus(AccountStatus.APPROVED);
         UserEntity savedUser = userRepository.save(user);
 
-        return new UserApproveResponseDto(
-            savedUser.getId(),
-            savedUser.getEmail(),
-            "User approved successfully"
-        );
+        return userMapper.toResponseDto(savedUser);
     }
 
-    
+    @Override
+    public List<UserApproveResponseDto> getPendingUsers() {
+        List<UserEntity> pendingOwners = userRepository.findByRoleAndStatus(Role.RESTAURANT_OWNER, AccountStatus.PENDING);
+
+        return pendingOwners
+                        .stream()
+                        .map(userMapper::toResponseDto)
+                        .toList();
+    }
+
 }

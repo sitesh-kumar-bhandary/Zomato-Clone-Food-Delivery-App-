@@ -229,7 +229,7 @@ public class OrderServiceImpl implements OrderService {
                 });
 
         boolean isCustomer = user.getRole() == Role.CUSTOMER && order.getUser().getId().equals(user.getId());
-        boolean isRestaurant = user.getRole() == Role.RESTAURANT
+        boolean isRestaurant = user.getRole() == Role.RESTAURANT_OWNER
                 && order.getRestaurant().getOwner().getId().equals(user.getId());
 
         if (!isCustomer && !isRestaurant) {

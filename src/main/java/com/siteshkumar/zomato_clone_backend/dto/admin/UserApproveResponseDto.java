@@ -10,6 +10,9 @@ import lombok.NoArgsConstructor;
 public class UserApproveResponseDto {
     
     private Long id;
+    private String name;
     private String email;
-    private String message;
+    private String phone;
+    private String status;
+
 }

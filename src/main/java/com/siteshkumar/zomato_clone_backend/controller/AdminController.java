@@ -1,5 +1,7 @@
 package com.siteshkumar.zomato_clone_backend.controller;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -75,7 +77,11 @@ public class AdminController {
         return ResponseEntity.ok(response);
     }
     
-    // @PreAuthorize("hasRole('ADMIN')")
-    // @GetMapping("/users/pending")
-    // public ResponseEntity<List<
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/users/pending")
+    public ResponseEntity<List<UserApproveResponseDto>> getPendingUsers(){
+        List<UserApproveResponseDto> users = adminService.getPendingUsers();
+        return ResponseEntity.ok(users);
+    }
+    
 }

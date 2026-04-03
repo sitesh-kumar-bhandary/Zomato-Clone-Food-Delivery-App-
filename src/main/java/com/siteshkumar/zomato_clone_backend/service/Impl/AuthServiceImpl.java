@@ -50,7 +50,7 @@ public class AuthServiceImpl implements AuthService {
 
         log.info("Restaurant signup initiated for email: {}", request.getEmail());
 
-        return createUser(request, Role.RESTAURANT, AccountStatus.PENDING);
+        return createUser(request, Role.RESTAURANT_OWNER, AccountStatus.PENDING);
     }
 
     private SignupResponseDto createUser(SignupRequestDto request, Role role, AccountStatus status){

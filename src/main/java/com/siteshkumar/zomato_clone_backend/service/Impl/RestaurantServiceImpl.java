@@ -49,7 +49,7 @@ public class RestaurantServiceImpl implements RestaurantService{
         CustomUserDetails user = authUtils.getCurrentLoggedInUser();
         log.info("Create restaurant request by userId: {}", user.getUser().getId());
 
-        if(user.getUser().getRole() != Role.RESTAURANT) {
+        if(user.getUser().getRole() != Role.RESTAURANT_OWNER) {
             log.warn("Unauthorized restaurant creation attempt. UserId: {}", user.getUser().getId());
             throw new AccessDeniedException("Only restaurant owners can create restaurant");
         }
