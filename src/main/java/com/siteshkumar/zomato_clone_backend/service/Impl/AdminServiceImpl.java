@@ -7,14 +7,17 @@ import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.siteshkumar.zomato_clone_backend.dto.admin.AdminReportSummaryDto;
+import com.siteshkumar.zomato_clone_backend.dto.admin.UserApproveResponseDto;
 import com.siteshkumar.zomato_clone_backend.dto.order.OrderResponseDto;
 import com.siteshkumar.zomato_clone_backend.entity.OrderEntity;
 import com.siteshkumar.zomato_clone_backend.entity.RestaurantEntity;
 import com.siteshkumar.zomato_clone_backend.entity.UserEntity;
+import com.siteshkumar.zomato_clone_backend.enums.AccountStatus;
 import com.siteshkumar.zomato_clone_backend.enums.OrderStatus;
 import com.siteshkumar.zomato_clone_backend.enums.Role;
 import com.siteshkumar.zomato_clone_backend.exception.ResourceNotFoundException;
@@ -193,4 +196,27 @@ public class AdminServiceImpl implements AdminService {
                 .ordersByStatus(ordersByStatus)
                 .build();
     }
+
+    @Override
+    @Transactional
+    public UserApproveResponseDto approveUser(Long id) {
+        UserEntity user = userRepository.findById(id).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        if(user.getRole() != Role.RESTAURANT)
+            throw new RuntimeException("Only restaurant owners need approval");
+
+        if (user.getStatus() == AccountStatus.APPROVED)
+            throw new IllegalStateException("User already approved");
+
+        user.setStatus(AccountStatus.APPROVED);
+        UserEntity savedUser = userRepository.save(user);
+
+        return new UserApproveResponseDto(
+            savedUser.getId(),
+            savedUser.getEmail(),
+            "User approved successfully"
+        );
+    }
+
+    
 }

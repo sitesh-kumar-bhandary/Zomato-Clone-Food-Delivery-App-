@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.siteshkumar.zomato_clone_backend.dto.admin.AdminReportSummaryDto;
+import com.siteshkumar.zomato_clone_backend.dto.admin.UserApproveResponseDto;
 import com.siteshkumar.zomato_clone_backend.dto.order.OrderResponseDto;
 import com.siteshkumar.zomato_clone_backend.enums.OrderStatus;
 import com.siteshkumar.zomato_clone_backend.service.AdminService;
@@ -66,4 +67,15 @@ public class AdminController {
         AdminReportSummaryDto summary = adminService.getSummary();
         return ResponseEntity.ok(summary);
     }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/users/{id}/approve")
+    public ResponseEntity<UserApproveResponseDto> approveUser(@PathVariable Long id) {
+        UserApproveResponseDto response = adminService.approveUser(id);
+        return ResponseEntity.ok(response);
+    }
+    
+    // @PreAuthorize("hasRole('ADMIN')")
+    // @GetMapping("/users/pending")
+    // public ResponseEntity<List<
 }

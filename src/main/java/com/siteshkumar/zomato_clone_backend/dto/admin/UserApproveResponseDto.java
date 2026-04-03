@@ -1,0 +1,15 @@
+package com.siteshkumar.zomato_clone_backend.dto.admin;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class UserApproveResponseDto {
+    
+    private Long id;
+    private String email;
+    private String message;
+}
