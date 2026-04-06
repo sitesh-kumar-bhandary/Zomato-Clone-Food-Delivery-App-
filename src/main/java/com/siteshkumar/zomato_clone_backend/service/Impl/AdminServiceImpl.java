@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -119,54 +120,6 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
-    @Transactional
-    public void blockRestaurant(Long id) {
-
-        log.info("Attempting to block restaurant with id: {}", id);
-
-        RestaurantEntity restaurant = restaurantRepository
-                .findById(id)
-                .orElseThrow(() -> {
-                    log.error("Restaurant not found with id: {}", id);
-                    return new ResourceNotFoundException("Restaurant not found");
-                });
-
-        if (restaurant.isBlocked()) {
-            log.warn("Restaurant already blocked with id: {}", id);
-            throw new IllegalStateException("Restaurant is already blocked");
-        }
-
-        restaurant.setBlocked(true);
-        restaurantRepository.save(restaurant);
-
-        log.info("Restaurant successfully blocked with id: {}", id);
-    }
-
-    @Override
-    @Transactional
-    public void unblockRestaurant(Long id) {
-
-        log.info("Attempting to unblock restaurant with id: {}", id);
-
-        RestaurantEntity restaurant = restaurantRepository
-                .findById(id)
-                .orElseThrow(() -> {
-                    log.error("Restaurant not found with id: {}", id);
-                    return new ResourceNotFoundException("Restaurant not found");
-                });
-
-        if (!restaurant.isBlocked()) {
-            log.warn("Restaurant is not blocked with id: {}", id);
-            throw new IllegalStateException("Restaurant is not blocked");
-        }
-
-        restaurant.setBlocked(false);
-        restaurantRepository.save(restaurant);
-
-        log.info("Restaurant successfully unblocked with id: {}", id);
-    }
-
-    @Override
     public AdminReportSummaryDto getSummary() {
 
         log.info("Generating admin summary report");
@@ -203,9 +156,10 @@ public class AdminServiceImpl implements AdminService {
     @Override
     @Transactional
     public UserApproveResponseDto approveUser(Long id) {
-        UserEntity user = userRepository.findById(id).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        UserEntity user = userRepository.findById(id)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        if(user.getRole() != Role.RESTAURANT_OWNER)
+        if (user.getRole() != Role.RESTAURANT_OWNER)
             throw new RuntimeException("Only restaurant owners need approval");
 
         if (user.getStatus() == AccountStatus.APPROVED)
@@ -219,12 +173,29 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public List<UserApproveResponseDto> getPendingUsers() {
-        List<UserEntity> pendingOwners = userRepository.findByRoleAndStatus(Role.RESTAURANT_OWNER, AccountStatus.PENDING);
+        List<UserEntity> pendingOwners = userRepository.findByRoleAndStatus(Role.RESTAURANT_OWNER,
+                AccountStatus.PENDING);
 
         return pendingOwners
-                        .stream()
-                        .map(userMapper::toResponseDto)
-                        .toList();
+                .stream()
+                .map(userMapper::toResponseDto)
+                .toList();
     }
 
+    @Override
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
+    public void updateRestaurantStatus(Long id, AccountStatus status) {
+
+        log.info("Updating restaurant status. id: {}, status: {}", id, status);
+
+        RestaurantEntity restaurant = restaurantRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Restaurant not found"));
+
+        restaurant.setRestaurantStatus(status);
+
+        restaurantRepository.save(restaurant);
+
+        log.info("Restaurant status updated successfully");
+    }
 }

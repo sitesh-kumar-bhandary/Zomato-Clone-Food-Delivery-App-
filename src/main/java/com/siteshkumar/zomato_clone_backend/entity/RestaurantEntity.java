@@ -1,7 +1,10 @@
 package com.siteshkumar.zomato_clone_backend.entity;
 
+import com.siteshkumar.zomato_clone_backend.enums.AccountStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -19,32 +22,27 @@ import lombok.Setter;
 @Setter
 @Entity
 @NoArgsConstructor
-@Table(
-    name="restaurants",
-    indexes = {
-        @Index(name="restaurant_city_ind", columnList="city")
-    }
-)
-public class RestaurantEntity extends AuditableEntity{
+@Table(name = "restaurants", indexes = {
+        @Index(name = "restaurant_city_ind", columnList = "city")
+})
+public class RestaurantEntity extends AuditableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
     @Column(nullable = false)
     private String name;
 
     @Column(nullable = false)
     private String city;
-    
-    @Column(nullable = false)
-    private boolean active = true;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private boolean blocked = false;
+    private AccountStatus restaurantStatus = AccountStatus.PENDING;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name="user_id")
+    @JoinColumn(name = "user_id")
     private UserEntity owner;
 
     @Version

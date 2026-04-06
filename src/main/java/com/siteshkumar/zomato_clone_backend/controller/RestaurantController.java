@@ -16,16 +16,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.siteshkumar.zomato_clone_backend.dto.restaurant.CreateRestaurantRequestDto;
-import com.siteshkumar.zomato_clone_backend.dto.restaurant.CreateRestaurantResponseDto;
 import com.siteshkumar.zomato_clone_backend.dto.restaurant.RestaurantResponseDto;
 import com.siteshkumar.zomato_clone_backend.dto.restaurant.UpdateRestaurantRequestDto;
-import com.siteshkumar.zomato_clone_backend.dto.restaurant.UpdateRestaurantResponseDto;
 import com.siteshkumar.zomato_clone_backend.service.RestaurantService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/restaurants")
@@ -35,16 +31,16 @@ public class RestaurantController {
     
     @PostMapping
     @PreAuthorize("hasAnyRole('RESTAURANT_OWNER', 'ADMIN')")
-    public ResponseEntity<CreateRestaurantResponseDto> createRestaurant(@Valid @RequestBody CreateRestaurantRequestDto request){
-        CreateRestaurantResponseDto createdRestaurant = restaurantService.createRestaurant(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdRestaurant);
+    public ResponseEntity<RestaurantResponseDto> createRestaurant(@Valid @RequestBody CreateRestaurantRequestDto request){
+        RestaurantResponseDto response = restaurantService.createRestaurant(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('RESTAURANT_OWNER', 'ADMIN')")
-    public ResponseEntity<UpdateRestaurantResponseDto> updateRestaurant(@PathVariable Long id, @Valid @RequestBody UpdateRestaurantRequestDto request){
-        UpdateRestaurantResponseDto updatedRestaurant = restaurantService.updateRestaurant(id, request);
-        return ResponseEntity.ok(updatedRestaurant);
+    public ResponseEntity<RestaurantResponseDto> updateRestaurant(@PathVariable Long id, @Valid @RequestBody UpdateRestaurantRequestDto request){
+        RestaurantResponseDto response = restaurantService.updateRestaurant(id, request);
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
@@ -59,7 +55,6 @@ public class RestaurantController {
     public ResponseEntity<Page<RestaurantResponseDto>> getAllRestaurants(
                                         @RequestParam(required = false) String city, 
                                         @PageableDefault(size=10, sort="id") Pageable pageable){
-            log.info("Controller HIT");
 
         Page<RestaurantResponseDto> restaurants = restaurantService.getAllRestaurants(city, pageable);
         return ResponseEntity.ok(restaurants);

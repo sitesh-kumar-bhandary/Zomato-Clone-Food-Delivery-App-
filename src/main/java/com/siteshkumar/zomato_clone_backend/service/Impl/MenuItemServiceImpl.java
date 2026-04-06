@@ -17,6 +17,7 @@ import com.siteshkumar.zomato_clone_backend.dto.menuItem.UpdateMenuItemResponseD
 import com.siteshkumar.zomato_clone_backend.entity.MenuItemEntity;
 import com.siteshkumar.zomato_clone_backend.entity.RestaurantEntity;
 import com.siteshkumar.zomato_clone_backend.entity.UserEntity;
+import com.siteshkumar.zomato_clone_backend.enums.AccountStatus;
 import com.siteshkumar.zomato_clone_backend.exception.ResourceNotFoundException;
 import com.siteshkumar.zomato_clone_backend.mapper.MenuItemMapper;
 import com.siteshkumar.zomato_clone_backend.repository.elasticsearch.MenuItemSearchRepository;
@@ -56,8 +57,8 @@ public class MenuItemServiceImpl implements MenuItemService {
         UserEntity currentUser = authUtils.getCurrentLoggedInUser().getUser();
 
         if (!restaurant.getOwner().getId().equals(currentUser.getId())) {
-            log.warn("Unauthorized menu item creation attempt. UserId: {}, RestaurantId: {}", 
-                        currentUser.getId(), restaurantId);
+            log.warn("Unauthorized menu item creation attempt. UserId: {}, RestaurantId: {}",
+                    currentUser.getId(), restaurantId);
             throw new AccessDeniedException("You are not allowed to create menu items in this restaurant");
         }
 
@@ -79,7 +80,7 @@ public class MenuItemServiceImpl implements MenuItemService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "menuItem", key="#menuItemId")
+    @CacheEvict(value = "menuItem", key = "#menuItemId")
     public UpdateMenuItemResponseDto updateMenuItem(Long restaurantId, Long menuItemId,
             UpdateMenuItemRequestDto request) {
 
@@ -89,14 +90,14 @@ public class MenuItemServiceImpl implements MenuItemService {
                 .orElseThrow(() -> {
                     log.error("Menu item not found. MenuItemId: {}, RestaurantId: {}", menuItemId, restaurantId);
                     return new ResourceNotFoundException(
-                        "Menu item with id " + menuItemId + " not found in the restaurant id " + restaurantId);
+                            "Menu item with id " + menuItemId + " not found in the restaurant id " + restaurantId);
                 });
 
         UserEntity currentUser = authUtils.getCurrentLoggedInUser().getUser();
 
         if (!menuItem.getRestaurant().getOwner().getId().equals(currentUser.getId())) {
-            log.warn("Unauthorized menu item update attempt. UserId: {}, MenuItemId: {}", 
-                        currentUser.getId(), menuItemId);
+            log.warn("Unauthorized menu item update attempt. UserId: {}, MenuItemId: {}",
+                    currentUser.getId(), menuItemId);
             throw new AccessDeniedException("You are not allowed to update this menu item");
         }
 
@@ -122,24 +123,24 @@ public class MenuItemServiceImpl implements MenuItemService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "menuItem", key="#menuItemId")
+    @CacheEvict(value = "menuItem", key = "#menuItemId")
     public void deleteMenuItem(Long restaurantId, Long menuItemId) {
 
         log.info("Deleting menu item (soft delete). RestaurantId: {}, MenuItemId: {}", restaurantId, menuItemId);
 
         MenuItemEntity menuItem = menuItemRepository.findByIdAndRestaurantId(menuItemId, restaurantId)
                 .orElseThrow(() -> {
-                    log.error("Menu item not found for deletion. MenuItemId: {}, RestaurantId: {}", 
-                                menuItemId, restaurantId);
+                    log.error("Menu item not found for deletion. MenuItemId: {}, RestaurantId: {}",
+                            menuItemId, restaurantId);
                     return new ResourceNotFoundException(
-                        "Menu item with id " + menuItemId + " not found in the restaurant id " + restaurantId);
+                            "Menu item with id " + menuItemId + " not found in the restaurant id " + restaurantId);
                 });
 
         UserEntity currentUser = authUtils.getCurrentLoggedInUser().getUser();
 
         if (!currentUser.getId().equals(menuItem.getRestaurant().getOwner().getId())) {
-            log.warn("Unauthorized menu item delete attempt. UserId: {}, MenuItemId: {}", 
-                        currentUser.getId(), menuItemId);
+            log.warn("Unauthorized menu item delete attempt. UserId: {}, MenuItemId: {}",
+                    currentUser.getId(), menuItemId);
             throw new AccessDeniedException("You are not allowed to delete this menu item");
         }
 
@@ -158,8 +159,8 @@ public class MenuItemServiceImpl implements MenuItemService {
     public MenuItemResponseDto getMenuItemById(Long restaurantId, Long menuItemId) {
         log.info("ENTERED getMenuItemById METHOD");
 
-        log.info("Fetching menu item (possibly from cache). RestaurantId: {}, MenuItemId: {}", 
-                    restaurantId, menuItemId);
+        log.info("Fetching menu item (possibly from cache). RestaurantId: {}, MenuItemId: {}",
+                restaurantId, menuItemId);
 
         metricsService.incrementDbHits();
 
@@ -167,10 +168,10 @@ public class MenuItemServiceImpl implements MenuItemService {
                 .orElseThrow(() -> {
                     log.error("Menu item not found. MenuItemId: {}, RestaurantId: {}", menuItemId, restaurantId);
                     return new ResourceNotFoundException(
-                        "Menu item with id " + menuItemId + " not found in the restaurant id " + restaurantId);
+                            "Menu item with id " + menuItemId + " not found in the restaurant id " + restaurantId);
                 });
 
-        if (!menuItem.isAvailable() || !menuItem.getRestaurant().isActive()) {
+        if (!menuItem.isAvailable() || menuItem.getRestaurant().getRestaurantStatus() != AccountStatus.APPROVED) {
             log.warn("Menu item not available or restaurant inactive. MenuItemId: {}", menuItemId);
             throw new ResourceNotFoundException("Menu item not available");
         }
@@ -192,7 +193,7 @@ public class MenuItemServiceImpl implements MenuItemService {
                     return new ResourceNotFoundException("Restaurant with id " + restaurantId + " not found");
                 });
 
-        if (!restaurant.isActive()) {
+        if (restaurant.getRestaurantStatus() != AccountStatus.APPROVED) {
             log.warn("Restaurant not active. RestaurantId: {}", restaurantId);
             throw new ResourceNotFoundException("Restaurant not available");
         }
@@ -212,16 +213,16 @@ public class MenuItemServiceImpl implements MenuItemService {
         log.info("Fetching owner menu items. RestaurantId: {}, Page: {}", restaurantId, pageable);
 
         RestaurantEntity restaurant = restaurantRepository.findById(restaurantId)
-            .orElseThrow(() -> {
-                log.error("Restaurant not found. RestaurantId: {}", restaurantId);
-                return new ResourceNotFoundException("Restaurant with id " + restaurantId + " not found");
-            });
+                .orElseThrow(() -> {
+                    log.error("Restaurant not found. RestaurantId: {}", restaurantId);
+                    return new ResourceNotFoundException("Restaurant with id " + restaurantId + " not found");
+                });
 
         UserEntity currentUser = authUtils.getCurrentLoggedInUser().getUser();
 
         if (!restaurant.getOwner().getId().equals(currentUser.getId())) {
-            log.warn("Unauthorized access to owner menu. UserId: {}, RestaurantId: {}", 
-                        currentUser.getId(), restaurantId);
+            log.warn("Unauthorized access to owner menu. UserId: {}, RestaurantId: {}",
+                    currentUser.getId(), restaurantId);
             throw new AccessDeniedException("You are not allowed to access this menu");
         }
 

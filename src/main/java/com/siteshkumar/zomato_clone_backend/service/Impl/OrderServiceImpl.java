@@ -15,6 +15,7 @@ import com.siteshkumar.zomato_clone_backend.dto.order.OrderResponseDto;
 import com.siteshkumar.zomato_clone_backend.dto.order.PlaceOrderRequestDto;
 import com.siteshkumar.zomato_clone_backend.dto.order.UpdateOrderStatusRequestDto;
 import com.siteshkumar.zomato_clone_backend.entity.*;
+import com.siteshkumar.zomato_clone_backend.enums.AccountStatus;
 import com.siteshkumar.zomato_clone_backend.enums.OrderStatus;
 import com.siteshkumar.zomato_clone_backend.enums.PaymentStatus;
 import com.siteshkumar.zomato_clone_backend.enums.RefundStatus;
@@ -76,14 +77,9 @@ public class OrderServiceImpl implements OrderService {
             throw new IllegalStateException("Cart restaurant is empty");
         }
 
-        if (cart.getRestaurant().isBlocked()) {
-            log.warn("Blocked restaurant order attempt. RestaurantId: {}", cart.getRestaurant().getId());
-            throw new AccessDeniedException("Restaurant is blocked by admin");
-        }
-
-        if (!cart.getRestaurant().isActive()) {
-            log.warn("Inactive restaurant order attempt. RestaurantId: {}", cart.getRestaurant().getId());
-            throw new IllegalStateException("Restaurant is currently closed");
+        if (cart.getRestaurant().getRestaurantStatus() != AccountStatus.APPROVED) {
+            log.warn("Unapproved restaurant order attempt. RestaurantId: {}", cart.getRestaurant().getId());
+            throw new AccessDeniedException("Restaurant is not available for orders");
         }
 
         AddressEntity address = addressRepository

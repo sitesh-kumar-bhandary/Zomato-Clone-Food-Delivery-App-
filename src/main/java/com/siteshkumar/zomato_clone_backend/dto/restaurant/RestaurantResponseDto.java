@@ -1,6 +1,7 @@
 package com.siteshkumar.zomato_clone_backend.dto.restaurant;
 
 import java.io.Serializable;
+import com.siteshkumar.zomato_clone_backend.enums.AccountStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,5 +17,6 @@ public class RestaurantResponseDto implements Serializable{
     private Long id;
     private String name;
     private String city;
+    private AccountStatus status;
 
 }

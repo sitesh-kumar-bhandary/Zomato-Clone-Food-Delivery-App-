@@ -23,9 +23,6 @@ public class RestaurantDocument {
     @Field(type = FieldType.Keyword)
     private String city;
 
-    @Field(type = FieldType.Boolean)
-    private boolean active;
-
-    @Field(type = FieldType.Boolean)
-    private boolean blocked;
+    @Field(type = FieldType.Keyword)
+    private String restaurantStatus;
 }

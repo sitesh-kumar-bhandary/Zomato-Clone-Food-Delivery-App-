@@ -43,9 +43,7 @@ public class SearchServiceImpl implements SearchService {
                                                                                                                 "city^2",
                                                                                                                 "description")
                                                                                                 .fuzziness("AUTO")))
-                                                                .filter(f -> f.term(t -> t.field("active").value(true)))
-                                                                .filter(f -> f.term(t -> t.field("blocked")
-                                                                                .value(false)))));
+                                                                .filter(f -> f.term(t -> t.field("restaurantStatus").value("APPROVED")))));
 
                 NativeQuery restaurantSearchQuery = NativeQuery.builder()
                                 .withQuery(restaurantQuery)

@@ -8,5 +8,10 @@ import com.siteshkumar.zomato_clone_backend.document.RestaurantDocument;
 
 @Repository
 public interface RestaurantSearchRepository extends ElasticsearchRepository<RestaurantDocument, String> {
-    Page<RestaurantDocument> findByNameContainingIgnoreCaseOrCityContainingIgnoreCaseAndActiveTrueAndBlockedFalse(String name, String city, Pageable pageable);
+    Page<RestaurantDocument> findByRestaurantStatusAndNameContainingIgnoreCaseOrRestaurantStatusAndCityContainingIgnoreCase(
+            String status1,
+            String name,
+            String status2,
+            String city,
+            Pageable pageable);
 }

@@ -7,13 +7,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import com.siteshkumar.zomato_clone_backend.document.RestaurantDocument;
 import com.siteshkumar.zomato_clone_backend.dto.restaurant.CreateRestaurantRequestDto;
-import com.siteshkumar.zomato_clone_backend.dto.restaurant.CreateRestaurantResponseDto;
 import com.siteshkumar.zomato_clone_backend.dto.restaurant.RestaurantResponseDto;
 import com.siteshkumar.zomato_clone_backend.dto.restaurant.UpdateRestaurantRequestDto;
-import com.siteshkumar.zomato_clone_backend.dto.restaurant.UpdateRestaurantResponseDto;
 import com.siteshkumar.zomato_clone_backend.entity.RestaurantEntity;
 import com.siteshkumar.zomato_clone_backend.entity.UserEntity;
 import com.siteshkumar.zomato_clone_backend.enums.AccountStatus;
@@ -44,7 +41,7 @@ public class RestaurantServiceImpl implements RestaurantService {
 
     @Override
     @Transactional
-    public CreateRestaurantResponseDto createRestaurant(CreateRestaurantRequestDto request) {
+    public RestaurantResponseDto createRestaurant(CreateRestaurantRequestDto request) {
 
         CustomUserDetails user = authUtils.getCurrentLoggedInUser();
         log.info("Create restaurant request by userId: {}", user.getUser().getId());
@@ -62,8 +59,9 @@ public class RestaurantServiceImpl implements RestaurantService {
         RestaurantEntity restaurant = new RestaurantEntity();
         restaurant.setName(request.getName());
         restaurant.setCity(request.getCity());
-        restaurant.setActive(false);
         restaurant.setOwner(user.getUser());
+
+        restaurant.setRestaurantStatus(AccountStatus.PENDING);
 
         RestaurantEntity savedRestaurant = restaurantRepository.save(restaurant);
 
@@ -72,13 +70,13 @@ public class RestaurantServiceImpl implements RestaurantService {
 
         log.info("Restaurant created successfully. RestaurantId: {}", savedRestaurant.getId());
 
-        return restaurantMapper.toCreateResponseDto(savedRestaurant);
+        return restaurantMapper.toResponseDto(savedRestaurant);
     }
 
     @Override
     @Transactional
     @CacheEvict(value = "restaurant", key = "#id")
-    public UpdateRestaurantResponseDto updateRestaurant(Long id, UpdateRestaurantRequestDto request) {
+    public RestaurantResponseDto updateRestaurant(Long id, UpdateRestaurantRequestDto request) {
 
         log.info("Updating restaurant. RestaurantId: {}", id);
 
@@ -91,12 +89,17 @@ public class RestaurantServiceImpl implements RestaurantService {
         CustomUserDetails user = authUtils.getCurrentLoggedInUser();
         UserEntity currentUser = user.getUser();
 
-        if (currentUser.getRole() != Role.ADMIN && !restaurant.getOwner().getId().equals(currentUser.getId())) {
+        // ✅ Authorization check
+        if (currentUser.getRole() != Role.ADMIN &&
+                !restaurant.getOwner().getId().equals(currentUser.getId())) {
+
             log.warn("Unauthorized restaurant update attempt. UserId: {}, RestaurantId: {}",
                     currentUser.getId(), id);
+
             throw new AccessDeniedException("You cannot update this restaurant");
         }
 
+        // ✅ Update name
         if (request.getName() != null && !request.getName().equals(restaurant.getName())) {
             log.debug("Updating restaurant name. RestaurantId: {}", id);
             restaurant.setName(request.getName());
@@ -104,12 +107,16 @@ public class RestaurantServiceImpl implements RestaurantService {
 
         RestaurantEntity updatedRestaurant = restaurantRepository.save(restaurant);
 
-        RestaurantDocument document = restaurantMapper.toDocument(updatedRestaurant);
-        restaurantSearchRepository.save(document);
+        if (updatedRestaurant.getRestaurantStatus() == AccountStatus.APPROVED) {
+            RestaurantDocument document = restaurantMapper.toDocument(updatedRestaurant);
+            restaurantSearchRepository.save(document);
+        } else {
+            restaurantSearchRepository.deleteById(updatedRestaurant.getId().toString());
+        }
 
         log.info("Restaurant updated successfully. RestaurantId: {}", id);
 
-        return restaurantMapper.toUpdateResponseDto(updatedRestaurant);
+        return restaurantMapper.toResponseDto(updatedRestaurant);
     }
 
     @Override
@@ -133,11 +140,11 @@ public class RestaurantServiceImpl implements RestaurantService {
             throw new AccessDeniedException("You are not allowed to delete this restaurant");
         }
 
-        restaurant.setActive(false);
+        restaurant.setRestaurantStatus(AccountStatus.REJECTED);
+
         restaurantRepository.save(restaurant);
 
-        RestaurantDocument document = restaurantMapper.toDocument(restaurant);
-        restaurantSearchRepository.save(document);
+        restaurantSearchRepository.deleteById(restaurant.getId().toString());
 
         log.info("Restaurant soft deleted successfully. RestaurantId: {}", id);
     }
@@ -151,14 +158,17 @@ public class RestaurantServiceImpl implements RestaurantService {
         Page<RestaurantEntity> restaurantPages;
 
         if (city == null || city.trim().isEmpty()) {
-            log.info("No city provided. Fetching all restaurants");
+            log.info("No city provided. Fetching all APPROVED restaurants");
 
             restaurantPages = restaurantRepository
-                    .findByActiveTrueAndBlockedFalse(pageable);
+                    .findByRestaurantStatus(AccountStatus.APPROVED, pageable);
 
         } else {
             restaurantPages = restaurantRepository
-                    .findByCityIgnoreCaseAndActiveTrueAndBlockedFalse(city, pageable);
+                    .findByCityIgnoreCaseAndRestaurantStatus(
+                            city,
+                            AccountStatus.APPROVED,
+                            pageable);
         }
 
         log.info("Restaurants fetched. Count: {}", restaurantPages.getTotalElements());
@@ -175,10 +185,11 @@ public class RestaurantServiceImpl implements RestaurantService {
 
         metricsService.incrementDbHits();
 
-        RestaurantEntity restaurant = restaurantRepository.findByIdAndBlockedFalse(id)
+        RestaurantEntity restaurant = restaurantRepository
+                .findByIdAndRestaurantStatus(id, AccountStatus.APPROVED)
                 .orElseThrow(() -> {
-                    log.error("Restaurant not found. RestaurantId: {}", id);
-                    return new ResourceNotFoundException("Restaurant with id " + id + " not found");
+                    log.error("Restaurant not found or not approved. RestaurantId: {}", id);
+                    return new ResourceNotFoundException("Restaurant not found");
                 });
 
         log.info("Restaurant fetched from database successfully. RestaurantId: {}", id);
