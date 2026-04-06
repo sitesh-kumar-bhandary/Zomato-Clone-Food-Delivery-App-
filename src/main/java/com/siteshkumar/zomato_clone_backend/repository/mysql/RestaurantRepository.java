@@ -12,6 +12,7 @@ public interface RestaurantRepository extends JpaRepository<RestaurantEntity, Lo
 
     Page<RestaurantEntity> findByCityIgnoreCaseAndActiveTrueAndBlockedFalse(String city, Pageable pageable);
     Page<RestaurantEntity> findByNameContainingIgnoreCase(String name, Pageable pageable);
+    Page<RestaurantEntity> findByActiveTrueAndBlockedFalse(Pageable pageable);
     Page<RestaurantEntity> findByActiveTrue(Pageable pageable);
     Optional<RestaurantEntity> findByIdAndBlockedFalse(Long id);
 }

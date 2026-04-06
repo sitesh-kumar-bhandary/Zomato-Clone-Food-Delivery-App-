@@ -2,7 +2,6 @@ package com.siteshkumar.zomato_clone_backend.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -41,25 +40,6 @@ public class SecurityConfig {
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS);
             })
             .authorizeHttpRequests(auth -> {
-
-                log.info("Configuring public endpoints and authorization rules");
-
-                // public api's
-                log.info("Permitting all requests to /auth/**");
-                auth.requestMatchers("/auth/**").permitAll();
-
-                log.info("Permitting Swagger/OpenAPI endpoints");
-                auth.requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll();
-
-                log.info("Permitting GET requests to /restaurants/**");
-                auth.requestMatchers(HttpMethod.GET, "/restaurants/**").permitAll();
-
-                // Only Restaurant's Api's
-
-                // Restaurant's and Admin combined Api's
-
-                // Only Admin api's
-
                 log.warn("Currently permitting all other requests (not secure for production)");
                 auth.anyRequest().permitAll();
             })

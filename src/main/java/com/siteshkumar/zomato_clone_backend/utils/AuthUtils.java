@@ -98,7 +98,7 @@ public class AuthUtils {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-        if(auth == null || (auth.getPrincipal() instanceof CustomUserDetails)){
+        if(auth == null || !(auth.getPrincipal() instanceof CustomUserDetails)){
             log.error("Authentication not found or invalid principal");
             throw new AuthenticationCredentialsNotFoundException("User not authenticated");
         }

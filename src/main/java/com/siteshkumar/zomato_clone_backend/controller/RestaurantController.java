@@ -5,7 +5,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-// import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,8 +23,9 @@ import com.siteshkumar.zomato_clone_backend.dto.restaurant.UpdateRestaurantRespo
 import com.siteshkumar.zomato_clone_backend.service.RestaurantService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
-
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/restaurants")
@@ -33,35 +34,39 @@ public class RestaurantController {
     private final RestaurantService restaurantService;
     
     @PostMapping
-    // @PreAuthorize("hasAnyRole('RESTAURANT', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('RESTAURANT_OWNER', 'ADMIN')")
     public ResponseEntity<CreateRestaurantResponseDto> createRestaurant(@Valid @RequestBody CreateRestaurantRequestDto request){
         CreateRestaurantResponseDto createdRestaurant = restaurantService.createRestaurant(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdRestaurant);
     }
 
     @PutMapping("/{id}")
-    // @PreAuthorize("hasAnyRole('RESTAURANT', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('RESTAURANT_OWNER', 'ADMIN')")
     public ResponseEntity<UpdateRestaurantResponseDto> updateRestaurant(@PathVariable Long id, @Valid @RequestBody UpdateRestaurantRequestDto request){
         UpdateRestaurantResponseDto updatedRestaurant = restaurantService.updateRestaurant(id, request);
         return ResponseEntity.ok(updatedRestaurant);
     }
 
     @DeleteMapping("/{id}")
-    // @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteRestaurant(@PathVariable Long id){
         restaurantService.deleteRestaurant(id);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'RESTAURANT_OWNER', 'ADMIN')")
     public ResponseEntity<Page<RestaurantResponseDto>> getAllRestaurants(
                                         @RequestParam(required = false) String city, 
                                         @PageableDefault(size=10, sort="id") Pageable pageable){
+            log.info("Controller HIT");
+
         Page<RestaurantResponseDto> restaurants = restaurantService.getAllRestaurants(city, pageable);
         return ResponseEntity.ok(restaurants);
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'RESTAURANT_OWNER', 'ADMIN')")
     public ResponseEntity<RestaurantResponseDto> getRestaurantById(@PathVariable Long id){
         RestaurantResponseDto restaurant = restaurantService.getRestaurantById(id);
         return ResponseEntity.ok(restaurant);

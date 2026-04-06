@@ -34,7 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class RestaurantServiceImpl implements RestaurantService{
+public class RestaurantServiceImpl implements RestaurantService {
 
     private final AuthUtils authUtils;
     private final MetricsService metricsService;
@@ -49,12 +49,12 @@ public class RestaurantServiceImpl implements RestaurantService{
         CustomUserDetails user = authUtils.getCurrentLoggedInUser();
         log.info("Create restaurant request by userId: {}", user.getUser().getId());
 
-        if(user.getUser().getRole() != Role.RESTAURANT_OWNER) {
+        if (user.getUser().getRole() != Role.RESTAURANT_OWNER) {
             log.warn("Unauthorized restaurant creation attempt. UserId: {}", user.getUser().getId());
             throw new AccessDeniedException("Only restaurant owners can create restaurant");
         }
 
-        if(user.getUser().getStatus() != AccountStatus.APPROVED) {
+        if (user.getUser().getStatus() != AccountStatus.APPROVED) {
             log.warn("Unapproved account tried to create restaurant. UserId: {}", user.getUser().getId());
             throw new AccountNotApprovedException("Account not approved yet");
         }
@@ -77,27 +77,27 @@ public class RestaurantServiceImpl implements RestaurantService{
 
     @Override
     @Transactional
-    @CacheEvict(value = "restaurant", key="#id")
+    @CacheEvict(value = "restaurant", key = "#id")
     public UpdateRestaurantResponseDto updateRestaurant(Long id, UpdateRestaurantRequestDto request) {
 
         log.info("Updating restaurant. RestaurantId: {}", id);
 
         RestaurantEntity restaurant = restaurantRepository.findById(id)
-                                    .orElseThrow(() -> {
-                                        log.error("Restaurant not found. RestaurantId: {}", id);
-                                        return new ResourceNotFoundException("Restaurant with id " + id + " not found");
-                                    });
+                .orElseThrow(() -> {
+                    log.error("Restaurant not found. RestaurantId: {}", id);
+                    return new ResourceNotFoundException("Restaurant with id " + id + " not found");
+                });
 
         CustomUserDetails user = authUtils.getCurrentLoggedInUser();
         UserEntity currentUser = user.getUser();
 
-        if(currentUser.getRole() != Role.ADMIN && ! restaurant.getOwner().getId().equals(currentUser.getId())) {
-            log.warn("Unauthorized restaurant update attempt. UserId: {}, RestaurantId: {}", 
-                        currentUser.getId(), id);
+        if (currentUser.getRole() != Role.ADMIN && !restaurant.getOwner().getId().equals(currentUser.getId())) {
+            log.warn("Unauthorized restaurant update attempt. UserId: {}, RestaurantId: {}",
+                    currentUser.getId(), id);
             throw new AccessDeniedException("You cannot update this restaurant");
         }
 
-        if(request.getName() != null && ! request.getName().equals(restaurant.getName())) {
+        if (request.getName() != null && !request.getName().equals(restaurant.getName())) {
             log.debug("Updating restaurant name. RestaurantId: {}", id);
             restaurant.setName(request.getName());
         }
@@ -114,22 +114,22 @@ public class RestaurantServiceImpl implements RestaurantService{
 
     @Override
     @Transactional
-    @CacheEvict(value = "restaurant", key="#id")
+    @CacheEvict(value = "restaurant", key = "#id")
     public void deleteRestaurant(Long id) {
 
         log.info("Deleting restaurant (soft delete). RestaurantId: {}", id);
 
         RestaurantEntity restaurant = restaurantRepository.findById(id)
-                                    .orElseThrow(() -> {
-                                        log.error("Restaurant not found for deletion. RestaurantId: {}", id);
-                                        return new ResourceNotFoundException("Restaurant with id " + id + " not found");
-                                    });
+                .orElseThrow(() -> {
+                    log.error("Restaurant not found for deletion. RestaurantId: {}", id);
+                    return new ResourceNotFoundException("Restaurant with id " + id + " not found");
+                });
 
         UserEntity user = authUtils.getCurrentLoggedInUser().getUser();
 
-        if(user.getRole() != Role.ADMIN) {
-            log.warn("Unauthorized restaurant delete attempt. UserId: {}, RestaurantId: {}", 
-                        user.getId(), id);
+        if (user.getRole() != Role.ADMIN) {
+            log.warn("Unauthorized restaurant delete attempt. UserId: {}, RestaurantId: {}",
+                    user.getId(), id);
             throw new AccessDeniedException("You are not allowed to delete this restaurant");
         }
 
@@ -146,15 +146,20 @@ public class RestaurantServiceImpl implements RestaurantService{
     @Transactional(readOnly = true)
     public Page<RestaurantResponseDto> getAllRestaurants(String city, Pageable pageable) {
 
-        log.info("Fetching restaurants by city: {}", city);
+        log.info("Fetching restaurants. City: {}", city);
 
-        if(city == null || city.trim().isEmpty()) {
-            log.warn("Empty city provided for restaurant search");
-            return Page.empty(pageable);
+        Page<RestaurantEntity> restaurantPages;
+
+        if (city == null || city.trim().isEmpty()) {
+            log.info("No city provided. Fetching all restaurants");
+
+            restaurantPages = restaurantRepository
+                    .findByActiveTrueAndBlockedFalse(pageable);
+
+        } else {
+            restaurantPages = restaurantRepository
+                    .findByCityIgnoreCaseAndActiveTrueAndBlockedFalse(city, pageable);
         }
-
-        Page<RestaurantEntity> restaurantPages = restaurantRepository
-                .findByCityIgnoreCaseAndActiveTrueAndBlockedFalse(city, pageable);
 
         log.info("Restaurants fetched. Count: {}", restaurantPages.getTotalElements());
 
@@ -163,7 +168,7 @@ public class RestaurantServiceImpl implements RestaurantService{
 
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = "restaurant", key="#id")
+    @Cacheable(value = "restaurant", key = "#id")
     public RestaurantResponseDto getRestaurantById(Long id) {
 
         log.info("Fetching restaurant (possibly from cache). RestaurantId: {}", id);
@@ -171,14 +176,13 @@ public class RestaurantServiceImpl implements RestaurantService{
         metricsService.incrementDbHits();
 
         RestaurantEntity restaurant = restaurantRepository.findByIdAndBlockedFalse(id)
-                                    .orElseThrow(() -> {
-                                        log.error("Restaurant not found. RestaurantId: {}", id);
-                                        return new ResourceNotFoundException("Restaurant with id " + id + " not found");
-                                    });
+                .orElseThrow(() -> {
+                    log.error("Restaurant not found. RestaurantId: {}", id);
+                    return new ResourceNotFoundException("Restaurant with id " + id + " not found");
+                });
 
-        log.info("Restaurant fetched successfully. RestaurantId: {}", id);
+        log.info("Restaurant fetched from database successfully. RestaurantId: {}", id);
 
         return restaurantMapper.toResponseDto(restaurant);
     }
-    
 }
