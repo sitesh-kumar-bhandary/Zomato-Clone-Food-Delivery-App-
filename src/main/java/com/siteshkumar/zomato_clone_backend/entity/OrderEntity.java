@@ -37,7 +37,7 @@ import lombok.Setter;
 @Table(name = "orders", indexes = {
         @Index(name = "order_user_ind", columnList = "user_id"),
         @Index(name = "order_status_ind", columnList = "status"),
-        @Index(name = "order_payment_created_ind", columnList = "paymentStatus, createdAt")
+        @Index(name = "order_payment_created_ind", columnList = "paymentStatus, created_at")
 })
 public class OrderEntity extends AuditableEntity {
 

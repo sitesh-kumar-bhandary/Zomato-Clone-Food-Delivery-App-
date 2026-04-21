@@ -27,7 +27,8 @@ import lombok.Setter;
 @Table(name = "payments", indexes = {
         @Index(name = "payment_order_ind", columnList = "order_id"),
         @Index(name = "payment_status_ind", columnList = "status"),
-        @Index(name = "payment_txn_ind", columnList = "transactionId")
+        @Index(name = "payment_stripe_session_ind", columnList = "stripeSessionId"),
+        @Index(name = "payment_stripe_intent_ind", columnList = "stripePaymentIntentId")
 })
 public class PaymentEntity extends AuditableEntity {
 

@@ -35,6 +35,7 @@ public class CartItemEntity {
     private Long id;
     
     @Min(1)
+    @Column(nullable = false)
     private int quantity;
 
     @Column(nullable = false, precision = 10, scale = 2)

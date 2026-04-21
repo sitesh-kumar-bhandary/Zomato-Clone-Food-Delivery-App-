@@ -44,7 +44,7 @@ public class CartEntity {
     @OneToMany(mappedBy = "cart", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<CartItemEntity> cartItems = new HashSet<>();
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="restaurant_id")
     private RestaurantEntity restaurant;
     

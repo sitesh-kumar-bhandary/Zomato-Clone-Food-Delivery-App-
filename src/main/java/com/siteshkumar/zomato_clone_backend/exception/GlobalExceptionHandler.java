@@ -79,6 +79,12 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(ex.getMessage(), HttpStatus.FORBIDDEN);
     }
 
+    @ExceptionHandler(AccountBlockedException.class)
+    public ResponseEntity<ApiError> handleAccountBlockedException(AccountBlockedException ex){
+        log.warn("[AccountBlockedException] {} | reqId={}", ex.getMessage(), MDC.get("requestId"));
+        return buildErrorResponse(ex.getMessage(), HttpStatus.FORBIDDEN);
+    }
+
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiError> handleAccessDeniedException(AccessDeniedException ex){
         log.warn("[AccessDenied] {} | reqId={}", ex.getMessage(), MDC.get("requestId"));

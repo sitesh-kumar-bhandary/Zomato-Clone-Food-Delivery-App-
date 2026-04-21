@@ -1,5 +1,6 @@
 package com.siteshkumar.zomato_clone_backend.service.Impl;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -11,12 +12,15 @@ import com.siteshkumar.zomato_clone_backend.dto.auth.LoginRequestDto;
 import com.siteshkumar.zomato_clone_backend.dto.auth.LoginResponseDto;
 import com.siteshkumar.zomato_clone_backend.dto.auth.SignupRequestDto;
 import com.siteshkumar.zomato_clone_backend.dto.auth.SignupResponseDto;
+import com.siteshkumar.zomato_clone_backend.entity.CartEntity;
 import com.siteshkumar.zomato_clone_backend.entity.UserEntity;
 import com.siteshkumar.zomato_clone_backend.enums.AccountStatus;
 import com.siteshkumar.zomato_clone_backend.enums.Role;
+import com.siteshkumar.zomato_clone_backend.exception.AccountBlockedException;
 import com.siteshkumar.zomato_clone_backend.exception.AccountNotApprovedException;
 import com.siteshkumar.zomato_clone_backend.exception.EmailAlreadyExistsException;
 import com.siteshkumar.zomato_clone_backend.exception.PhoneAlreadyExistsException;
+import com.siteshkumar.zomato_clone_backend.repository.mysql.CartRepository;
 import com.siteshkumar.zomato_clone_backend.repository.mysql.UserRepository;
 import com.siteshkumar.zomato_clone_backend.security.CustomUserDetails;
 import com.siteshkumar.zomato_clone_backend.service.AuthService;
@@ -34,36 +38,33 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final AuthUtils authUtils;
+    private final CartRepository cartRepository;
 
     @Override
     @Transactional
     public SignupResponseDto customerSignup(SignupRequestDto request) {
-
         log.info("Customer signup initiated for email: {}", request.getEmail());
-
         return createUser(request, Role.CUSTOMER, AccountStatus.APPROVED);
     }
 
     @Override
     @Transactional
-    public SignupResponseDto restaurantSignup(SignupRequestDto request){
-
+    public SignupResponseDto restaurantSignup(SignupRequestDto request) {
         log.info("Restaurant signup initiated for email: {}", request.getEmail());
-
         return createUser(request, Role.RESTAURANT_OWNER, AccountStatus.PENDING);
     }
 
-    private SignupResponseDto createUser(SignupRequestDto request, Role role, AccountStatus status){
+    private SignupResponseDto createUser(SignupRequestDto request, Role role, AccountStatus status) {
 
-        log.info("Creating user with email: {}, role: {}, status: {}", 
-                    request.getEmail(), role, status);
+        log.info("Creating user with email: {}, role: {}, status: {}",
+                request.getEmail(), role, status);
 
-        if(userRepository.existsByEmail(request.getEmail())) {
+        if (userRepository.existsByEmail(request.getEmail())) {
             log.warn("Signup failed - Email already exists: {}", request.getEmail());
             throw new EmailAlreadyExistsException("Email already exists");
         }
 
-        if(userRepository.existsByPhone(request.getPhone())) {
+        if (userRepository.existsByPhone(request.getPhone())) {
             log.warn("Signup failed - Phone already exists: {}", request.getPhone());
             throw new PhoneAlreadyExistsException("Phone already exists");
         }
@@ -76,21 +77,34 @@ public class AuthServiceImpl implements AuthService {
         user.setEmail(request.getEmail());
         user.setPhone(request.getPhone());
         user.setPassword(encryptedPassword);
-        
         user.setStatus(status);
         user.setRole(role);
 
-        UserEntity savedUser = userRepository.save(user);
+        UserEntity savedUser;
+        try {
+            savedUser = userRepository.save(user);
+        } 
+        
+        catch (DataIntegrityViolationException ex) {
+            log.warn("Save failed - Email or phone already in use: {}", request.getEmail());
+            throw new EmailAlreadyExistsException("Email or phone already in use");
+        }
 
-        log.info("User created successfully with id: {} and email: {}", 
-                    savedUser.getId(), savedUser.getEmail());
+        if (role == Role.CUSTOMER) {
+            CartEntity cart = new CartEntity();
+            cart.setUser(savedUser);
+            cartRepository.save(cart);
+            log.info("Empty cart created for customer id: {}", savedUser.getId());
+        }
+
+        log.info("User created successfully with id: {} and email: {}",
+                savedUser.getId(), savedUser.getEmail());
 
         return new SignupResponseDto(
-            savedUser.getId(),
-            savedUser.getName(),
-            savedUser.getEmail(),
-            savedUser.getStatus().name()
-        );
+                savedUser.getId(),
+                savedUser.getName(),
+                savedUser.getEmail(),
+                savedUser.getStatus().name());
     }
 
     @Override
@@ -101,14 +115,19 @@ public class AuthServiceImpl implements AuthService {
 
         Authentication auth = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                    request.getEmail(), 
-                    request.getPassword()));
+                        request.getEmail(),
+                        request.getPassword()));
 
         log.info("Authentication successful for email: {}", request.getEmail());
 
         CustomUserDetails user = (CustomUserDetails) auth.getPrincipal();
 
-        if(user.getUser().getStatus() != AccountStatus.APPROVED) {
+        if (user.getUser().isBlocked()) {
+            log.warn("Login blocked - Account is blocked for email: {}", request.getEmail());
+            throw new AccountBlockedException("Account has been blocked");
+        }
+
+        if (user.getUser().getStatus() != AccountStatus.APPROVED) {
             log.warn("Login blocked - Account not approved for email: {}", request.getEmail());
             throw new AccountNotApprovedException("Account not approved yet");
         }
@@ -118,9 +137,8 @@ public class AuthServiceImpl implements AuthService {
         log.info("JWT token generated for user: {}", user.getUsername());
 
         return new LoginResponseDto(
-            user.getUsername(),
-            token,
-            user.getUser().getRole().name()
-        );
+                user.getUsername(),
+                token,
+                user.getUser().getRole().name());
     }
 }

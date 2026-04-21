@@ -11,6 +11,7 @@ import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import jakarta.validation.constraints.Min;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,7 +24,8 @@ import lombok.Setter;
 @Table(
     name="order_items",
     indexes = {
-        @Index(name = "order_item_order_ind", columnList = "order_id")
+        @Index(name = "order_item_order_ind", columnList = "order_id"),
+        @Index(name = "order_item_menu_ind", columnList = "menu_item_id")
     }
 )
 public class OrderItemEntity {
@@ -47,4 +49,7 @@ public class OrderItemEntity {
     @JoinColumn(name="menu_item_id", nullable = false)
     private MenuItemEntity menuItem;
 
+    @Version
+    @Column(nullable = false)
+    private Long version;
 }
