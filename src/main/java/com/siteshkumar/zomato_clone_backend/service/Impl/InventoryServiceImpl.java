@@ -1,13 +1,12 @@
 package com.siteshkumar.zomato_clone_backend.service.Impl;
 
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import com.siteshkumar.zomato_clone_backend.entity.MenuItemEntity;
 import com.siteshkumar.zomato_clone_backend.exception.ResourceNotFoundException;
 import com.siteshkumar.zomato_clone_backend.repository.mysql.MenuItemRepository;
 import com.siteshkumar.zomato_clone_backend.service.InventoryService;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -24,20 +23,29 @@ public class InventoryServiceImpl implements InventoryService {
 
         log.info("Restoring stock. MenuItemId: {}, Quantity: {}", menuItemId, quantity);
 
-        MenuItemEntity item = menuItemRepository
-                            .findById(menuItemId)
-                            .orElseThrow(() -> {
-                                log.error("Menu item not found while restoring stock. Id: {}", menuItemId);
-                                return new ResourceNotFoundException("Item not found");
-                            });
+        try {
 
-        int updatedStock = item.getStock() + quantity;
-        item.setStock(updatedStock);
+            MenuItemEntity item = menuItemRepository
+                    .findById(menuItemId)
+                    .orElseThrow(() -> {
+                        log.error("Menu item not found while restoring stock. Id: {}", menuItemId);
+                        return new ResourceNotFoundException("Item not found");
+                    });
 
-        menuItemRepository.save(item);
+            int updatedStock = item.getStock() + quantity;
+            item.setStock(updatedStock);
 
-        log.info("Stock restored successfully. MenuItemId: {}, New Stock: {}", 
+            menuItemRepository.save(item);
+
+            log.info("Stock restored successfully. MenuItemId: {}, New Stock: {}",
                     menuItemId, updatedStock);
+
+        } 
+        catch (ObjectOptimisticLockingFailureException ex) {
+            log.error("Concurrent stock restore conflict. MenuItemId: {}", menuItemId);
+            throw new IllegalStateException(
+                    "Stock was modified concurrently for item: " + menuItemId + ". Please retry.");
+        }
     }
 
     @Override
@@ -46,30 +54,39 @@ public class InventoryServiceImpl implements InventoryService {
 
         log.info("Deducting stock. MenuItemId: {}, Quantity: {}", menuItemId, quantity);
 
-        MenuItemEntity item = menuItemRepository
-                .findById(menuItemId)
-                .orElseThrow(() -> {
-                    log.error("Menu item not found while deducting stock. Id: {}", menuItemId);
-                    return new ResourceNotFoundException("Menu item not found");
-                });
+        try {
 
-        if(!item.isAvailable()){
-            log.warn("Stock deduction failed - Item not available. MenuItemId: {}", menuItemId);
-            throw new RuntimeException("Item not available");
-        }
+            MenuItemEntity item = menuItemRepository
+                    .findById(menuItemId)
+                    .orElseThrow(() -> {
+                        log.error("Menu item not found while deducting stock. Id: {}", menuItemId);
+                        return new ResourceNotFoundException("Menu item not found");
+                    });
 
-        if(item.getStock() < quantity){
-            log.warn("Stock deduction failed - Insufficient stock. MenuItemId: {}, Available: {}, Requested: {}", 
+            if (!item.isAvailable()) {
+                log.warn("Stock deduction failed - Item not available. MenuItemId: {}", menuItemId);
+                throw new IllegalStateException("Item is currently not available: " + menuItemId);
+            }
+
+            if (item.getStock() < quantity) {
+                log.warn("Stock deduction failed - Insufficient stock. MenuItemId: {}, Available: {}, Requested: {}",
                         menuItemId, item.getStock(), quantity);
-            throw new IllegalStateException("Insufficient stock");
-        }
+                throw new IllegalStateException("Insufficient stock for item: " + menuItemId);
+            }
 
-        int updatedStock = item.getStock() - quantity;
-        item.setStock(updatedStock);
+            int updatedStock = item.getStock() - quantity;
+            item.setStock(updatedStock);
 
-        menuItemRepository.save(item);
+            menuItemRepository.save(item);
 
-        log.info("Stock deducted successfully. MenuItemId: {}, Remaining Stock: {}", 
+            log.info("Stock deducted successfully. MenuItemId: {}, Remaining Stock: {}",
                     menuItemId, updatedStock);
+
+        } 
+        catch (ObjectOptimisticLockingFailureException ex) {
+            log.error("Concurrent stock deduction conflict. MenuItemId: {}", menuItemId);
+            throw new IllegalStateException(
+                    "Stock was modified concurrently for item: " + menuItemId + ". Please retry.");
+        }
     }
 }

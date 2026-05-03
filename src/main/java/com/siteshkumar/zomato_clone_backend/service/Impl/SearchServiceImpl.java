@@ -9,7 +9,6 @@ import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.stereotype.Service;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
-import org.springframework.transaction.annotation.Transactional;
 import com.siteshkumar.zomato_clone_backend.document.MenuItemDocument;
 import com.siteshkumar.zomato_clone_backend.document.RestaurantDocument;
 import com.siteshkumar.zomato_clone_backend.dto.SearchResponseDto;
@@ -27,7 +26,6 @@ public class SearchServiceImpl implements SearchService {
         private final ElasticsearchOperations elasticsearchOperations;
 
         @Override
-        @Transactional(readOnly = true)
         public SearchResponseDto search(String query, int page, int size) {
                 log.info("Search request received. Query: '{}', Page: {}, Size: {}", query, page, size);
 

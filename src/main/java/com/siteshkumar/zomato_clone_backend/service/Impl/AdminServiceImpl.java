@@ -4,15 +4,12 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import com.siteshkumar.zomato_clone_backend.dto.admin.AdminReportSummaryDto;
 import com.siteshkumar.zomato_clone_backend.dto.admin.UserApproveResponseDto;
 import com.siteshkumar.zomato_clone_backend.dto.order.OrderResponseDto;
@@ -30,7 +27,6 @@ import com.siteshkumar.zomato_clone_backend.repository.mysql.OrderRepository;
 import com.siteshkumar.zomato_clone_backend.repository.mysql.RestaurantRepository;
 import com.siteshkumar.zomato_clone_backend.repository.mysql.UserRepository;
 import com.siteshkumar.zomato_clone_backend.service.AdminService;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -120,6 +116,7 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public AdminReportSummaryDto getSummary() {
 
         log.info("Generating admin summary report");
@@ -172,6 +169,7 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<UserApproveResponseDto> getPendingUsers() {
         List<UserEntity> pendingOwners = userRepository.findByRoleAndStatus(Role.RESTAURANT_OWNER,
                 AccountStatus.PENDING);
@@ -184,7 +182,6 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     @Transactional
-    @PreAuthorize("hasRole('ADMIN')")
     public void updateRestaurantStatus(Long id, AccountStatus status) {
 
         log.info("Updating restaurant status. id: {}, status: {}", id, status);
