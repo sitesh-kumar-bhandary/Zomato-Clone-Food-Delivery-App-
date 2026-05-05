@@ -149,27 +149,15 @@ public class RestaurantServiceImpl implements RestaurantService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<RestaurantResponseDto> getAllRestaurants(String city) {
+    public List<RestaurantResponseDto> getAllRestaurantsByCity(String city) {
 
         log.info("Fetching restaurants. City: {}", city);
 
-        List<RestaurantEntity> restaurants;
+        if (city == null || city.trim().isEmpty())
+            log.info("No city provided");
 
-        if (city == null || city.trim().isEmpty()) {
-            log.info("No city provided. Fetching all APPROVED restaurants");
-
-            restaurants = restaurantRepository
-                    .findByRestaurantStatus(AccountStatus.APPROVED);
-
-        } 
-        else {
-            restaurants = restaurantRepository
-                    .findByCityIgnoreCaseAndRestaurantStatus(
-                            city,
-                            AccountStatus.APPROVED);
-        }
-
-        log.info("Restaurants fetched. Count: {}", restaurants.size());
+        List<RestaurantEntity> restaurants = restaurantRepository.findByCityIgnoreCaseAndRestaurantStatus(city,
+                AccountStatus.APPROVED);
 
         return restaurants.stream()
                 .map(restaurantMapper::toResponseDto)
@@ -195,5 +183,20 @@ public class RestaurantServiceImpl implements RestaurantService {
         log.info("Restaurant fetched from database successfully. RestaurantId: {}", id);
 
         return restaurantMapper.toResponseDto(restaurant);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<RestaurantResponseDto> getMyRestaurants(Long id) {
+
+        log.info("Fetching restaurants for ownerId: {}", id);
+
+        List<RestaurantEntity> restaurants = restaurantRepository.findByOwnerId(id);
+
+        log.info("Restaurants fetched for ownerId: {} Count: {}", id, restaurants.size());
+
+        return restaurants.stream()
+                .map(restaurantMapper::toResponseDto)
+                .toList();
     }
 }

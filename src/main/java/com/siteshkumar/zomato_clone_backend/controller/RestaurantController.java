@@ -52,9 +52,9 @@ public class RestaurantController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('CUSTOMER', 'RESTAURANT_OWNER', 'ADMIN')")
-    public ResponseEntity<List<RestaurantResponseDto>> getAllRestaurants(@RequestParam(required = false) String city) {
+    public ResponseEntity<List<RestaurantResponseDto>> getAllRestaurantsByCity(@RequestParam String city) {
 
-        List<RestaurantResponseDto> restaurants = restaurantService.getAllRestaurants(city);
+        List<RestaurantResponseDto> restaurants = restaurantService.getAllRestaurantsByCity(city);
         return ResponseEntity.ok(restaurants);
     }
 
@@ -63,5 +63,12 @@ public class RestaurantController {
     public ResponseEntity<RestaurantResponseDto> getRestaurantById(@PathVariable Long id) {
         RestaurantResponseDto restaurant = restaurantService.getRestaurantById(id);
         return ResponseEntity.ok(restaurant);
+    }
+
+    @GetMapping("/id")
+    @PreAuthorize("hasRole('RESTAURANT_OWNER')")
+    public ResponseEntity<List<RestaurantResponseDto>> getMyRestaurants(@PathVariable Long id){
+        List<RestaurantResponseDto> restaurants = restaurantService.getMyRestaurants(id);
+        return ResponseEntity.ok(restaurants);
     }
 }

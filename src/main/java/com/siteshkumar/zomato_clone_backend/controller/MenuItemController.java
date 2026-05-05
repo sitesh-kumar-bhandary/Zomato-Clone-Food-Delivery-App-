@@ -1,5 +1,6 @@
 package com.siteshkumar.zomato_clone_backend.controller;
 
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -58,8 +59,8 @@ public class MenuItemController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<MenuItemResponseDto>> getPublicMenuItems(@PathVariable Long restaurantId, Pageable pageable){
-        Page<MenuItemResponseDto> page = menuItemService.getPublicMenuItems(restaurantId, pageable);
+    public ResponseEntity<List<MenuItemResponseDto>> getPublicMenuItems(@PathVariable Long restaurantId){
+        List<MenuItemResponseDto> page = menuItemService.getPublicMenuItems(restaurantId);
         return ResponseEntity.ok(page);
     }
 

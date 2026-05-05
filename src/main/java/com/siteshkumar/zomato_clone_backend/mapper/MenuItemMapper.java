@@ -28,6 +28,7 @@ public class MenuItemMapper {
                 entity.getRestaurant().getId(),
                 entity.getName(),
                 entity.getPrice(),
+                entity.getStock(),
                 entity.isAvailable()
         );
     }

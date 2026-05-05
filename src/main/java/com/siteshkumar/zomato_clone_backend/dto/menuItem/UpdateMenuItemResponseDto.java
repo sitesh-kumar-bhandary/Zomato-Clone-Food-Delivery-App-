@@ -17,6 +17,7 @@ public class UpdateMenuItemResponseDto implements Serializable {
     private Long restaurantId;
     private String name;
     private BigDecimal price;
+    private Integer stock;
     private boolean active;
 
 }

@@ -2,6 +2,7 @@ package com.siteshkumar.zomato_clone_backend.dto.menuItem;
 
 import java.math.BigDecimal;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -21,5 +22,6 @@ public class CreateMenuItemRequestDto {
     private BigDecimal price;
 
     @NotNull(message = "Stock is required")
+    @Min(0)
     private Integer stock;
 }

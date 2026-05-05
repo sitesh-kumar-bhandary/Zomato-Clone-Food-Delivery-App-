@@ -1,5 +1,7 @@
 package com.siteshkumar.zomato_clone_backend.service.Impl;
 
+import java.util.List;
+
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -7,7 +9,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import com.siteshkumar.zomato_clone_backend.document.MenuItemDocument;
 import com.siteshkumar.zomato_clone_backend.dto.menuItem.CreateMenuItemRequestDto;
 import com.siteshkumar.zomato_clone_backend.dto.menuItem.CreateMenuItemResponseDto;
@@ -26,7 +27,6 @@ import com.siteshkumar.zomato_clone_backend.repository.mysql.RestaurantRepositor
 import com.siteshkumar.zomato_clone_backend.service.MenuItemService;
 import com.siteshkumar.zomato_clone_backend.service.MetricsService;
 import com.siteshkumar.zomato_clone_backend.utils.AuthUtils;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -112,6 +112,11 @@ public class MenuItemServiceImpl implements MenuItemService {
             menuItem.setPrice(request.getPrice());
         }
 
+        if (request.getStock() != null && !request.getStock().equals(menuItem.getStock())) {
+            log.debug("Updating stock for MenuItemId: {}", menuItemId);
+            menuItem.setStock(request.getStock());
+        }
+
         MenuItemEntity savedMenuItem = menuItemRepository.save(menuItem);
 
         log.info("Menu item updated successfully. MenuItemId: {}", menuItemId);
@@ -184,9 +189,9 @@ public class MenuItemServiceImpl implements MenuItemService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<MenuItemResponseDto> getPublicMenuItems(Long restaurantId, Pageable pageable) {
+    public List<MenuItemResponseDto> getPublicMenuItems(Long restaurantId) {
 
-        log.info("Fetching public menu items. RestaurantId: {}, Page: {}", restaurantId, pageable);
+        log.info("Fetching public menu items. RestaurantId: {}", restaurantId);
 
         RestaurantEntity restaurant = restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> {
@@ -199,12 +204,14 @@ public class MenuItemServiceImpl implements MenuItemService {
             throw new ResourceNotFoundException("Restaurant not available");
         }
 
-        Page<MenuItemEntity> menuItems = menuItemRepository
-                .findByRestaurantIdAndAvailableTrue(restaurantId, pageable);
+        List<MenuItemEntity> menuItems = menuItemRepository
+                .findByRestaurantIdAndAvailableTrue(restaurantId);
 
-        log.info("Public menu items fetched successfully. Count: {}", menuItems.getTotalElements());
+        log.info("Public menu items fetched successfully. Count: {}", menuItems.size());
 
-        return menuItems.map(menuItemMapper::toResponseDto);
+        return menuItems.stream()
+                .map(menuItemMapper::toResponseDto)
+                .toList();
     }
 
     @Override

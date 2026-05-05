@@ -10,7 +10,9 @@ public interface RestaurantService {
     RestaurantResponseDto createRestaurant(CreateRestaurantRequestDto request);
     RestaurantResponseDto updateRestaurant(Long id, UpdateRestaurantRequestDto request);
     void deleteRestaurant(Long id);
-    List<RestaurantResponseDto> getAllRestaurants(String city);
+    List<RestaurantResponseDto> getAllRestaurantsByCity(String city);
     RestaurantResponseDto getRestaurantById(Long id);
+
+    List<RestaurantResponseDto> getMyRestaurants(Long id);
 
 }
