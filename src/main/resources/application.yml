@@ -50,11 +50,6 @@ jwt:
   secretKey: ${JWT_SECRET_KEY}
   expiration: ${JWT_EXPIRATION_TIME}
 
-stripe:
-  secret-key: ${STRIPE_SECRET_KEY}
-  webhook:
-    secret: ${WEBHOOK_SECRET}
-
 #logging properties
 logging:
   pattern:
