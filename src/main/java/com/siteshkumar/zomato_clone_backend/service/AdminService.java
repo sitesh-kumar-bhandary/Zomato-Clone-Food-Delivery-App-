@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import com.siteshkumar.zomato_clone_backend.dto.admin.AdminReportSummaryDto;
 import com.siteshkumar.zomato_clone_backend.dto.admin.UserApproveResponseDto;
 import com.siteshkumar.zomato_clone_backend.dto.order.OrderResponseDto;
+import com.siteshkumar.zomato_clone_backend.dto.restaurant.RestaurantResponseDto;
 import com.siteshkumar.zomato_clone_backend.enums.AccountStatus;
 import com.siteshkumar.zomato_clone_backend.enums.OrderStatus;
 
@@ -19,5 +20,6 @@ public interface AdminService {
     UserApproveResponseDto approveUser(Long id);
     List<UserApproveResponseDto> getPendingUsers();
 
-    void updateRestaurantStatus(Long id, AccountStatus status);
+    List<RestaurantResponseDto> getPendingRestaurants();
+    RestaurantResponseDto updateRestaurantStatus(Long id, AccountStatus status);
 }

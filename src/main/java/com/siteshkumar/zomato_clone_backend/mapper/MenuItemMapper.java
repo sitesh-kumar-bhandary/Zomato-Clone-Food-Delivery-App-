@@ -15,6 +15,7 @@ public class MenuItemMapper {
         return new CreateMenuItemResponseDto(
             entity.getId(),
             entity.getName(),
+            entity.getStock(),
             entity.getPrice(),
             entity.isAvailable()
         );

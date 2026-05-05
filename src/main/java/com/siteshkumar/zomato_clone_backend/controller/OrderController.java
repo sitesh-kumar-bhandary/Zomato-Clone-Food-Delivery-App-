@@ -44,7 +44,7 @@ public class OrderController {
     }
 
     @GetMapping("/restaurant")
-    @PreAuthorize("hasRole('RESTAURANT')")
+    @PreAuthorize("hasRole('RESTAURANT_OWNER')")
     public ResponseEntity<Page<OrderResponseDto>> getRestaurantOrders(
         @PageableDefault(size=10, sort="createdAt", direction = Sort.Direction.DESC) Pageable pageable){
             Page<OrderResponseDto> page = orderService.getRestaurantOrders(pageable);
@@ -52,14 +52,14 @@ public class OrderController {
     }
 
     @PatchMapping("/{orderId}/status")
-    @PreAuthorize("hasRole('RESTAURANT')")
+    @PreAuthorize("hasRole('RESTAURANT_OWNER')")
     public ResponseEntity<OrderResponseDto> updateOrderStatus(@PathVariable Long orderId, @Valid @RequestBody UpdateOrderStatusRequestDto request){
         OrderResponseDto updatedOrderStatus = orderService.updateOrderStatus(orderId, request);
         return ResponseEntity.ok(updatedOrderStatus);
     }
 
     @PatchMapping("/{orderId}/cancel")
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'RESTAURANT')")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'RESTAURANT_OWNER')")
     public ResponseEntity<OrderResponseDto> cancelMyOrder(@PathVariable Long orderId){
         OrderResponseDto cancelledOrder = orderService.cancelMyOrder(orderId);
         return ResponseEntity.ok(cancelledOrder);

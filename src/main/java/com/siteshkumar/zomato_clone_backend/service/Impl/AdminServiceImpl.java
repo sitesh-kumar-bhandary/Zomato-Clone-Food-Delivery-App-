@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.siteshkumar.zomato_clone_backend.dto.admin.AdminReportSummaryDto;
 import com.siteshkumar.zomato_clone_backend.dto.admin.UserApproveResponseDto;
 import com.siteshkumar.zomato_clone_backend.dto.order.OrderResponseDto;
+import com.siteshkumar.zomato_clone_backend.dto.restaurant.RestaurantResponseDto;
 import com.siteshkumar.zomato_clone_backend.entity.OrderEntity;
 import com.siteshkumar.zomato_clone_backend.entity.RestaurantEntity;
 import com.siteshkumar.zomato_clone_backend.entity.UserEntity;
@@ -22,6 +23,7 @@ import com.siteshkumar.zomato_clone_backend.enums.Role;
 import com.siteshkumar.zomato_clone_backend.exception.ResourceNotFoundException;
 import com.siteshkumar.zomato_clone_backend.exception.UserAlreadyBlockedException;
 import com.siteshkumar.zomato_clone_backend.mapper.OrderMapper;
+import com.siteshkumar.zomato_clone_backend.mapper.RestaurantMapper;
 import com.siteshkumar.zomato_clone_backend.mapper.UserMapper;
 import com.siteshkumar.zomato_clone_backend.repository.mysql.OrderRepository;
 import com.siteshkumar.zomato_clone_backend.repository.mysql.RestaurantRepository;
@@ -39,6 +41,7 @@ public class AdminServiceImpl implements AdminService {
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final RestaurantMapper restaurantMapper;
     private final OrderMapper orderMapper;
 
     @Override
@@ -181,8 +184,19 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<RestaurantResponseDto> getPendingRestaurants(){
+        List<RestaurantEntity> pendingRestaurants = restaurantRepository.findByRestaurantStatusNot(AccountStatus.APPROVED);
+
+        return pendingRestaurants
+                        .stream()
+                        .map(restaurantMapper::toResponseDto)
+                        .toList();
+    }
+
+    @Override
     @Transactional
-    public void updateRestaurantStatus(Long id, AccountStatus status) {
+    public RestaurantResponseDto updateRestaurantStatus(Long id, AccountStatus status) {
 
         log.info("Updating restaurant status. id: {}, status: {}", id, status);
 
@@ -191,8 +205,10 @@ public class AdminServiceImpl implements AdminService {
 
         restaurant.setRestaurantStatus(status);
 
-        restaurantRepository.save(restaurant);
+        RestaurantEntity savedRestaurant = restaurantRepository.save(restaurant);
 
         log.info("Restaurant status updated successfully");
+
+        return restaurantMapper.toResponseDto(savedRestaurant);
     }
 }

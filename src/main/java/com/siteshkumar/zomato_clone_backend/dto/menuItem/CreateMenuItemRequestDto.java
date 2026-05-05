@@ -19,4 +19,7 @@ public class CreateMenuItemRequestDto {
     @NotNull(message="Price of the item is required")
     @DecimalMin(value="0.01", message="Price must be greater than 0")
     private BigDecimal price;
+
+    @NotNull(message = "Stock is required")
+    private Integer stock;
 }

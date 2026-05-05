@@ -1,9 +1,8 @@
 package com.siteshkumar.zomato_clone_backend.service.Impl;
 
+import java.util.List;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,7 +23,6 @@ import com.siteshkumar.zomato_clone_backend.security.CustomUserDetails;
 import com.siteshkumar.zomato_clone_backend.service.MetricsService;
 import com.siteshkumar.zomato_clone_backend.service.RestaurantService;
 import com.siteshkumar.zomato_clone_backend.utils.AuthUtils;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -151,29 +149,31 @@ public class RestaurantServiceImpl implements RestaurantService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<RestaurantResponseDto> getAllRestaurants(String city, Pageable pageable) {
+    public List<RestaurantResponseDto> getAllRestaurants(String city) {
 
         log.info("Fetching restaurants. City: {}", city);
 
-        Page<RestaurantEntity> restaurantPages;
+        List<RestaurantEntity> restaurants;
 
         if (city == null || city.trim().isEmpty()) {
             log.info("No city provided. Fetching all APPROVED restaurants");
 
-            restaurantPages = restaurantRepository
-                    .findByRestaurantStatus(AccountStatus.APPROVED, pageable);
+            restaurants = restaurantRepository
+                    .findByRestaurantStatus(AccountStatus.APPROVED);
 
-        } else {
-            restaurantPages = restaurantRepository
+        } 
+        else {
+            restaurants = restaurantRepository
                     .findByCityIgnoreCaseAndRestaurantStatus(
                             city,
-                            AccountStatus.APPROVED,
-                            pageable);
+                            AccountStatus.APPROVED);
         }
 
-        log.info("Restaurants fetched. Count: {}", restaurantPages.getTotalElements());
+        log.info("Restaurants fetched. Count: {}", restaurants.size());
 
-        return restaurantPages.map(restaurantMapper::toResponseDto);
+        return restaurants.stream()
+                .map(restaurantMapper::toResponseDto)
+                .toList();
     }
 
     @Override

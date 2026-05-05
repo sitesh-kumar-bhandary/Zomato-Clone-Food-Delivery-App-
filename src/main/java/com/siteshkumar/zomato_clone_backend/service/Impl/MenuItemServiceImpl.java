@@ -65,6 +65,7 @@ public class MenuItemServiceImpl implements MenuItemService {
         MenuItemEntity menuItem = new MenuItemEntity();
         menuItem.setName(request.getName());
         menuItem.setPrice(request.getPrice());
+        menuItem.setStock(request.getStock());
         menuItem.setRestaurant(restaurant);
         menuItem.setAvailable(true);
 

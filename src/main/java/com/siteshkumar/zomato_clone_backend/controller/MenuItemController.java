@@ -31,21 +31,21 @@ public class MenuItemController {
     private final MenuItemService menuItemService;
 
     @PostMapping
-    @PreAuthorize("hasRole('RESTAURANT')")
+    @PreAuthorize("hasRole('RESTAURANT_OWNER')")
     public ResponseEntity<CreateMenuItemResponseDto> createMenuItem(@PathVariable Long restaurantId , @Valid @RequestBody CreateMenuItemRequestDto request){
         CreateMenuItemResponseDto response = menuItemService.createMenuItem(restaurantId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{menuItemId}")
-    @PreAuthorize("hasRole('RESTAURANT')")
+    @PreAuthorize("hasRole('RESTAURANT_OWNER')")
     public ResponseEntity<UpdateMenuItemResponseDto> updateMenuItem(@PathVariable Long restaurantId, @PathVariable Long menuItemId, @Valid @RequestBody UpdateMenuItemRequestDto request){
         UpdateMenuItemResponseDto response = menuItemService.updateMenuItem(restaurantId, menuItemId, request);
         return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{menuItemId}")
-    @PreAuthorize("hasRole('RESTAURANT')")
+    @PreAuthorize("hasRole('RESTAURANT_OWNER')")
     public ResponseEntity<Void> deleteMenuItem(@PathVariable Long restaurantId, @PathVariable Long menuItemId){
         menuItemService.deleteMenuItem(restaurantId, menuItemId);
         return ResponseEntity.noContent().build();
@@ -64,7 +64,7 @@ public class MenuItemController {
     }
 
     @GetMapping("/owner")
-    @PreAuthorize("hasRole('RESTAURANT')")
+    @PreAuthorize("hasRole('RESTAURANT_OWNER')")
     public ResponseEntity<Page<MenuItemResponseDto>> getOwnerMenuItems(
                                                     @PathVariable Long restaurantId, 
                                                     @PageableDefault(size=10, sort="restaurantId") Pageable pageable){

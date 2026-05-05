@@ -12,6 +12,7 @@ public class CreateMenuItemResponseDto {
     
     private Long id;
     private String name;
+    private Integer stock;
     private BigDecimal price;
     private boolean available;
 }
