@@ -3,16 +3,17 @@ package com.siteshkumar.zomato_clone_backend.service.Impl;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.siteshkumar.zomato_clone_backend.dto.payment.PaymentResponseDto;
 import com.siteshkumar.zomato_clone_backend.entity.OrderEntity;
 import com.siteshkumar.zomato_clone_backend.entity.PaymentEntity;
 import com.siteshkumar.zomato_clone_backend.enums.OrderStatus;
 import com.siteshkumar.zomato_clone_backend.enums.PaymentMode;
 import com.siteshkumar.zomato_clone_backend.enums.PaymentStatus;
+import com.siteshkumar.zomato_clone_backend.mapper.PaymentMapper;
 import com.siteshkumar.zomato_clone_backend.repository.mysql.OrderRepository;
 import com.siteshkumar.zomato_clone_backend.repository.mysql.PaymentRepository;
 import com.siteshkumar.zomato_clone_backend.service.OrderService;
 import com.siteshkumar.zomato_clone_backend.service.PaymentService;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -24,10 +25,11 @@ public class PaymentServiceImpl implements PaymentService {
     private final OrderRepository orderRepository;
     private final OrderService orderService;
     private final PaymentRepository paymentRepository;
+    private final PaymentMapper paymentMapper;
 
     @Override
     @Transactional
-    public PaymentEntity createPayment(Long orderId) {
+    public PaymentResponseDto createPayment(Long orderId) {
 
         log.info("Creating payment for OrderId: {}", orderId);
 
@@ -41,7 +43,7 @@ public class PaymentServiceImpl implements PaymentService {
         Optional<PaymentEntity> existingPaymentOpt = paymentRepository.findByOrderId(orderId);
 
         if (existingPaymentOpt.isPresent()) {
-            return existingPaymentOpt.get();
+            return paymentMapper.toDto(existingPaymentOpt.get());
         }
 
         PaymentEntity payment = new PaymentEntity();
@@ -57,15 +59,17 @@ public class PaymentServiceImpl implements PaymentService {
 
         log.info("Payment created successfully for OrderId: {}", orderId);
 
-        return payment;
+        return paymentMapper.toDto(payment);
     }
 
     @Override
-    @Transactional
-    public PaymentEntity getPaymentByOrderId(Long orderId) {
+    @Transactional(readOnly = true)
+    public PaymentResponseDto getPaymentByOrderId(Long orderId) {
 
-        return paymentRepository.findByOrderId(orderId)
+        PaymentEntity payment = paymentRepository.findByOrderId(orderId)
                 .orElseThrow(() -> new RuntimeException("Payment not found"));
+
+        return paymentMapper.toDto(payment);
     }
 
     @Override

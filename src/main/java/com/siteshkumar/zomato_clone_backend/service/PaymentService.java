@@ -1,9 +1,12 @@
 package com.siteshkumar.zomato_clone_backend.service;
 
-import com.siteshkumar.zomato_clone_backend.entity.PaymentEntity;
+import com.siteshkumar.zomato_clone_backend.dto.payment.PaymentResponseDto;
 
 public interface PaymentService {
-    PaymentEntity createPayment(Long orderId);
-    PaymentEntity getPaymentByOrderId(Long orderId);
+
+    PaymentResponseDto createPayment(Long orderId);
+
+    PaymentResponseDto getPaymentByOrderId(Long orderId);
+
     void markPaymentFailed(Long orderId);
 }
