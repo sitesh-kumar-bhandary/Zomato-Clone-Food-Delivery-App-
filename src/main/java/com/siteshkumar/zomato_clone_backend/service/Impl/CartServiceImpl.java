@@ -40,66 +40,111 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional
-    public CartSummaryResponseDto addItem(AddCartItemRequestDto request) {
-
-        log.info("Add item to cart initiated. MenuItemId: {}, Quantity: {}", 
-                    request.getMenuItemId(), request.getQuantity());
-
-        MenuItemEntity menuItem = menuItemRepository.findById(request.getMenuItemId())
-                                .orElseThrow(() -> {
-                                    log.error("Menu item not found with id: {}", request.getMenuItemId());
-                                    return new ResourceNotFoundException("Menu item not found");
-                                });
+    public CartSummaryResponseDto createCart() {
 
         UserEntity user = authUtils.getCurrentLoggedInUser().getUser();
 
-        if(user.getRole() != Role.CUSTOMER) {
-            log.warn("Unauthorized cart access attempt by userId: {}", user.getId());
+        log.info("Create cart request received for userId: {}", user.getId());
+
+        if (user.getRole() != Role.CUSTOMER) {
+            log.warn("Unauthorized cart creation attempt by userId: {}", user.getId());
             throw new AccessDeniedException("You are not allowed to do this");
         }
 
-        CartEntity cart = cartRepository
-                        .findByUserId(user.getId())
-                        .orElseGet(() -> {
-                            log.info("No existing cart found. Creating new cart for userId: {}", user.getId());
-                            CartEntity newCart = new CartEntity();
-                            newCart.setUser(user);
-                            newCart.setRestaurant(menuItem.getRestaurant());
-                            newCart.setCartItems(new HashSet<>());
-                            return newCart;
-                        });
+        if (cartRepository.findByUserId(user.getId()).isPresent()) {
+            log.warn("Cart already exists for userId: {}", user.getId());
+            throw new ConflictException("Cart already exists");
+        }
 
-        if(cart.getRestaurant() != null && ! cart.getRestaurant().getId().equals(menuItem.getRestaurant().getId())) {
-            log.warn("Attempt to add items from different restaurants. UserId: {}", user.getId());
-            throw new ConflictException("Can not add items from different restaurants");
+        CartEntity cart = new CartEntity();
+
+        cart.setUser(user);
+        cart.setCartItems(new HashSet<>());
+        cart.setTotalItems(0);
+        cart.setTotalAmount(BigDecimal.ZERO);
+
+        CartEntity savedCart = cartRepository.save(cart);
+
+        log.info("Cart created successfully for userId: {}", user.getId());
+
+        return cartMapper.toCartSummaryDto(savedCart);
+    }
+
+    @Override
+    @Transactional
+    public CartSummaryResponseDto addItem(AddCartItemRequestDto request) {
+
+        log.info("Add item request received. MenuItemId: {}, Quantity: {}",
+                request.getMenuItemId(),
+                request.getQuantity());
+
+        UserEntity user = authUtils.getCurrentLoggedInUser().getUser();
+
+        CartEntity cart = cartRepository
+                .findByUserId(user.getId())
+                .orElseThrow(() -> {
+                    log.error("Cart not found for userId: {}", user.getId());
+                    return new ResourceNotFoundException("Cart not found");
+                });
+
+        MenuItemEntity menuItem = menuItemRepository
+                .findById(request.getMenuItemId())
+                .orElseThrow(() -> {
+                    log.error("Menu item not found with id: {}", request.getMenuItemId());
+                    return new ResourceNotFoundException("Menu item not found");
+                });
+
+        // First item added in cart
+        if (cart.getRestaurant() == null) {
+
+            cart.setRestaurant(menuItem.getRestaurant());
+
+            log.info("Restaurant assigned to cart. RestaurantId: {}",
+                    menuItem.getRestaurant().getId());
+        }
+
+        // Different restaurant validation
+        else if (!cart.getRestaurant().getId().equals(menuItem.getRestaurant().getId())) {
+
+            log.warn("Attempt to add items from different restaurants. UserId: {}",
+                    user.getId());
+
+            throw new ConflictException(
+                    "Can not add items from different restaurants");
         }
 
         Optional<CartItemEntity> existingItem = cart
-                                                .getCartItems()
-                                                .stream()
-                                                .filter(item -> item.getMenuItem().getId().equals(menuItem.getId()))
-                                                .findFirst();
+                .getCartItems()
+                .stream()
+                .filter(item -> item.getMenuItem().getId().equals(menuItem.getId()))
+                .findFirst();
 
-        if(existingItem.isPresent()){
-            log.info("Updating existing cart item. MenuItemId: {}", menuItem.getId());
+        if (existingItem.isPresent()) {
+
             CartItemEntity item = existingItem.get();
+
             item.updateQuantity(item.getQuantity() + request.getQuantity());
+
+            log.info("Existing cart item quantity updated. CartItemId: {}",
+                    item.getId());
         }
 
         else {
-            log.info("Adding new item to cart. MenuItemId: {}", menuItem.getId());
 
             CartItemEntity cartItem = new CartItemEntity();
+
             cartItem.setCart(cart);
             cartItem.setMenuItem(menuItem);
             cartItem.setPriceAtTime(menuItem.getPrice());
             cartItem.updateQuantity(request.getQuantity());
 
             cart.getCartItems().add(cartItem);
+
+            log.info("New item added to cart. MenuItemId: {}",
+                    menuItem.getId());
         }
 
         cartUtils.recalculateCart(cart);
-        log.debug("Cart recalculated for userId: {}", user.getId());
 
         CartEntity savedCart = cartRepository.save(cart);
 
@@ -110,37 +155,85 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional
-    public CartSummaryResponseDto updateItem(Long cartItemId, UpdateCartItemRequestDto request) {
+    public CartSummaryResponseDto updateItemQuantity(
+            Long cartItemId,
+            UpdateCartItemRequestDto request) {
 
-        log.info("Updating cart item. CartItemId: {}, New Quantity: {}", cartItemId, request.getQuantity());
+        log.info(
+                "Update cart item quantity request received. CartItemId: {}, Quantity: {}",
+                cartItemId,
+                request.getQuantity());
 
         UserEntity user = authUtils.getCurrentLoggedInUser().getUser();
 
+        if (user.getRole() != Role.CUSTOMER) {
+
+            log.warn(
+                    "Unauthorized cart update attempt by userId: {}",
+                    user.getId());
+
+            throw new AccessDeniedException(
+                    "You are not allowed to do this");
+        }
+
+        if (request.getQuantity() <= 0) {
+
+            log.warn(
+                    "Invalid quantity update request. Quantity: {}",
+                    request.getQuantity());
+
+            throw new ConflictException(
+                    "Quantity must be greater than 0");
+        }
+
         CartEntity cart = cartRepository
-                        .findByUserId(user.getId())
-                        .orElseThrow(() -> {
-                            log.error("Cart not found for userId: {}", user.getId());
-                            return new ResourceNotFoundException("Cart not found");
-                        });
+                .findByUserId(user.getId())
+                .orElseThrow(() -> {
+
+                    log.error(
+                            "Cart not found for userId: {}",
+                            user.getId());
+
+                    return new ResourceNotFoundException(
+                            "Cart not found");
+                });
 
         CartItemEntity cartItem = cart
-                                .getCartItems()
-                                .stream()
-                                .filter(item -> item.getId().equals(cartItemId))
-                                .findFirst()
-                                .orElseThrow(() -> {
-                                    log.error("Cart item not found with id: {}", cartItemId);
-                                    return new ResourceNotFoundException("Cart item not found");
-                                });
+                .getCartItems()
+                .stream()
+                .filter(item -> item.getId().equals(cartItemId))
+                .findFirst()
+                .orElseThrow(() -> {
+
+                    log.error(
+                            "Cart item not found with id: {}",
+                            cartItemId);
+
+                    return new ResourceNotFoundException(
+                            "Cart item not found");
+                });
+
+        int oldQuantity = cartItem.getQuantity();
 
         cartItem.updateQuantity(request.getQuantity());
 
+        log.info(
+                "Cart item quantity updated successfully. CartItemId: {}, Old Quantity: {}, New Quantity: {}",
+                cartItemId,
+                oldQuantity,
+                request.getQuantity());
+
         cartUtils.recalculateCart(cart);
-        log.debug("Cart recalculated after update. UserId: {}", user.getId());
+
+        log.debug(
+                "Cart recalculated successfully for userId: {}",
+                user.getId());
 
         CartEntity savedCart = cartRepository.save(cart);
 
-        log.info("Cart item updated successfully. CartItemId: {}", cartItemId);
+        log.info(
+                "Cart saved successfully after quantity update for userId: {}",
+                user.getId());
 
         return cartMapper.toCartSummaryDto(savedCart);
     }
@@ -154,21 +247,21 @@ public class CartServiceImpl implements CartService {
         UserEntity user = authUtils.getCurrentLoggedInUser().getUser();
 
         CartEntity cart = cartRepository
-                        .findByUserId(user.getId())
-                        .orElseThrow(() -> {
-                            log.error("Cart not found for userId: {}", user.getId());
-                            return new ResourceNotFoundException("Cart not found");
-                        });
+                .findByUserId(user.getId())
+                .orElseThrow(() -> {
+                    log.error("Cart not found for userId: {}", user.getId());
+                    return new ResourceNotFoundException("Cart not found");
+                });
 
         CartItemEntity cartItem = cart
-                                .getCartItems()
-                                .stream()
-                                .filter(item -> item.getId().equals(cartItemId))
-                                .findFirst()
-                                .orElseThrow(() -> {
-                                    log.error("Cart item not found with id: {}", cartItemId);
-                                    return new ResourceNotFoundException("Cart item not found");
-                                });
+                .getCartItems()
+                .stream()
+                .filter(item -> item.getId().equals(cartItemId))
+                .findFirst()
+                .orElseThrow(() -> {
+                    log.error("Cart item not found with id: {}", cartItemId);
+                    return new ResourceNotFoundException("Cart item not found");
+                });
 
         cart.getCartItems().remove(cartItem);
 
@@ -190,18 +283,18 @@ public class CartServiceImpl implements CartService {
         log.info("Fetching cart summary for userId: {}", user.getId());
 
         CartEntity cart = cartRepository
-                        .findByUserId(user.getId())
-                        .orElseGet(() -> {
-                            log.info("No cart found. Returning empty cart for userId: {}", user.getId());
-                            CartEntity newCart = new CartEntity();
-                            newCart.setCartItems(new HashSet<>());
-                            newCart.setTotalAmount(BigDecimal.ZERO);
-                            newCart.setTotalItems(0);
-                            return newCart;
-                        });
+                .findByUserId(user.getId())
+                .orElseGet(() -> {
+                    log.info("No cart found. Returning empty cart for userId: {}", user.getId());
+                    CartEntity newCart = new CartEntity();
+                    newCart.setCartItems(new HashSet<>());
+                    newCart.setTotalAmount(BigDecimal.ZERO);
+                    newCart.setTotalItems(0);
+                    return newCart;
+                });
 
         log.info("Cart summary fetched successfully for userId: {}", user.getId());
 
         return cartMapper.toCartSummaryDto(cart);
-    }    
+    }
 }

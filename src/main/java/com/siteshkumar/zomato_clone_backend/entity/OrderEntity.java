@@ -5,8 +5,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import com.siteshkumar.zomato_clone_backend.enums.OrderStatus;
+import com.siteshkumar.zomato_clone_backend.enums.PaymentMode;
 import com.siteshkumar.zomato_clone_backend.enums.PaymentStatus;
-import com.siteshkumar.zomato_clone_backend.enums.RefundStatus;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
@@ -35,7 +35,7 @@ import lombok.Setter;
 @Table(name = "orders", indexes = {
         @Index(name = "order_user_ind", columnList = "user_id"),
         @Index(name = "order_status_ind", columnList = "status"),
-        @Index(name = "order_payment_created_ind", columnList = "paymentStatus, created_at")
+        @Index(name = "order_payment_created_ind", columnList = "payment_status, created_at")
 })
 public class OrderEntity extends AuditableEntity {
 
@@ -65,20 +65,19 @@ public class OrderEntity extends AuditableEntity {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItemEntity> items = new ArrayList<>();
 
+    // Simplified Payment Fields
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PaymentMode paymentMode;
+
     @Setter(AccessLevel.NONE)
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private PaymentStatus paymentStatus = PaymentStatus.PENDING;
 
-    @Column(unique = true)
-    private String paymentIntentId;
-
     @Column
     private LocalDateTime paymentTime;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private RefundStatus refundStatus = RefundStatus.NONE;
 
     @Version
     @Column(nullable = false)
@@ -87,49 +86,52 @@ public class OrderEntity extends AuditableEntity {
     // Business Methods
 
     public void addItem(OrderItemEntity item) {
+
         items.add(item);
+
         item.setOrder(this);
     }
 
     public void updateStatus(OrderStatus newStatus) {
+
         if (this.status == newStatus)
             return;
 
         if (!this.status.canTransitionTo(newStatus)) {
+
             throw new IllegalStateException(
-                    "Cannot transition from " + this.status + " to " + newStatus);
+                    "Cannot transition from " +
+                            this.status +
+                            " to " +
+                            newStatus);
         }
 
         this.status = newStatus;
     }
 
-    public boolean isPaid() {
-        return this.paymentStatus == PaymentStatus.SUCCESS;
-    }
-
     // Payment Helper Methods
 
-    public void markPaymentSuccess(String paymentIntentId) {
-        this.paymentStatus = PaymentStatus.SUCCESS;
-        this.paymentIntentId = paymentIntentId;
+    public boolean isPaid() {
+
+        return this.paymentStatus == PaymentStatus.PAID;
+    }
+
+    public void markPaymentPaid() {
+
+        this.paymentStatus = PaymentStatus.PAID;
+
         this.paymentTime = LocalDateTime.now();
     }
 
     public void markPaymentFailed() {
+
         this.paymentStatus = PaymentStatus.FAILED;
-    }
-
-    public void markPaymentTimeout() {
-        this.paymentStatus = PaymentStatus.TIMEOUT;
-    }
-
-    public void markRefundSuccess() {
-        this.refundStatus = RefundStatus.SUCCESS;
     }
 
     // Utility Methods
 
     public boolean isCancellable() {
+
         return this.status != OrderStatus.DELIVERED &&
                 this.status != OrderStatus.CANCELLED;
     }

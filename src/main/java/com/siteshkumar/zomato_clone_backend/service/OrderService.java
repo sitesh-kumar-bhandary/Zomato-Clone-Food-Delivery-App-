@@ -19,5 +19,4 @@ public interface  OrderService {
     OrderResponseDto updateOrderStatus(Long orderId, UpdateOrderStatusRequestDto request);   
 
     void cancelOrder(OrderEntity order);
-    void processRefund(OrderEntity order);
 }

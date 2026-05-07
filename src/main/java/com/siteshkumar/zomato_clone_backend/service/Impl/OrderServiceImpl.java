@@ -1,6 +1,5 @@
 package com.siteshkumar.zomato_clone_backend.service.Impl;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -18,7 +17,6 @@ import com.siteshkumar.zomato_clone_backend.entity.*;
 import com.siteshkumar.zomato_clone_backend.enums.AccountStatus;
 import com.siteshkumar.zomato_clone_backend.enums.OrderStatus;
 import com.siteshkumar.zomato_clone_backend.enums.PaymentStatus;
-import com.siteshkumar.zomato_clone_backend.enums.RefundStatus;
 import com.siteshkumar.zomato_clone_backend.enums.Role;
 import com.siteshkumar.zomato_clone_backend.exception.AddressNotFoundException;
 import com.siteshkumar.zomato_clone_backend.exception.ResourceNotFoundException;
@@ -166,12 +164,9 @@ public class OrderServiceImpl implements OrderService {
         OrderEntity savedOrder = orderRepository.save(order);
         log.info("Order placed successfully. OrderId: {}", savedOrder.getId());
 
-        cart.getCartItems().clear();
-        cart.setTotalAmount(BigDecimal.ZERO);
-        cart.setTotalItems(0);
-        cartRepository.save(cart);
+        cartRepository.delete(cart);
 
-        log.info("Cart cleared after order. UserId: {}", user.getId());
+        log.info("Cart deleted successfully after order placement. UserId: {}", user.getId());
 
         return orderMapper.toResponseDto(savedOrder);
     }
@@ -285,20 +280,32 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Transactional
-    public void markPaymentSuccess(Long orderId, String paymentIntentId) {
+    public void markPaymentSuccess(Long orderId) {
 
-        OrderEntity order = orderRepository.findById(orderId)
+        OrderEntity order = orderRepository
+                .findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
 
-        if (order.getPaymentStatus() == PaymentStatus.SUCCESS) {
+        if (order.getPaymentStatus() == PaymentStatus.PAID) {
+
+            log.warn(
+                    "Payment already marked as paid. OrderId: {}",
+                    orderId);
+
             return;
         }
 
-        order.markPaymentSuccess(paymentIntentId);
+        order.markPaymentPaid();
 
-        order.updateStatus(OrderStatus.CONFIRMED);
+        // Auto confirm order after successful payment
+        if (order.getStatus() == OrderStatus.PLACED) {
 
-        log.info("Payment successful. OrderId: {}", orderId);
+            order.updateStatus(OrderStatus.CONFIRMED);
+        }
+
+        log.info(
+                "Payment marked as successful for OrderId: {}",
+                orderId);
 
         orderRepository.save(order);
     }
@@ -307,48 +314,72 @@ public class OrderServiceImpl implements OrderService {
     public void cancelOrder(OrderEntity order) {
 
         if (order.getStatus() == OrderStatus.CANCELLED) {
+
+            log.warn(
+                    "Order already cancelled. OrderId: {}",
+                    order.getId());
+
             return;
         }
 
         if (order.getStatus() == OrderStatus.DELIVERED) {
-            throw new IllegalStateException("Delivered order cannot be cancelled");
+
+            log.error(
+                    "Attempt to cancel delivered order. OrderId: {}",
+                    order.getId());
+
+            throw new IllegalStateException(
+                    "Delivered order cannot be cancelled");
         }
 
-        if (order.getPaymentStatus() == PaymentStatus.SUCCESS && order.getRefundStatus() == RefundStatus.NONE)
-            processRefund(order);
-
+        // Restore inventory
         for (OrderItemEntity item : order.getItems()) {
+
             inventoryService.restoreStock(
+                    item.getMenuItem().getId(),
+                    item.getQuantity());
+
+            log.info(
+                    "Stock restored for menuItemId: {}, Quantity: {}",
                     item.getMenuItem().getId(),
                     item.getQuantity());
         }
 
+        // Update payment status if required
+        if (order.getPaymentStatus() == PaymentStatus.PENDING) {
+
+            order.markPaymentFailed();
+
+            log.info(
+                    "Payment marked as failed for OrderId: {}",
+                    order.getId());
+        }
+
+        // Cancel order
         order.updateStatus(OrderStatus.CANCELLED);
 
-        log.warn("Order cancelled by system. OrderId: {}", order.getId());
+        log.warn(
+                "Order cancelled successfully. OrderId: {}",
+                order.getId());
     }
 
     @Transactional
     public void handlePaymentTimeout(Long orderId) {
 
-        OrderEntity order = orderRepository.findById(orderId)
+        OrderEntity order = orderRepository
+                .findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
 
         if (order.getPaymentStatus() != PaymentStatus.PENDING) {
             return;
         }
 
-        order.markPaymentTimeout();
+        order.markPaymentFailed();
 
         cancelOrder(order);
-    }
 
-    @Transactional
-    public void processRefund(OrderEntity order) {
-        log.info("Mock refund initiated for OrderId: {}", order.getId());
-
-        order.markRefundSuccess();
-
-        log.info("Mock refund initiated for OrderId: {}", order.getId());
+        log.warn(
+                "Order cancelled due to payment timeout. OrderId: {}",
+                orderId);
     }
 }
